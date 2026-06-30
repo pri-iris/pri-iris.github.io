@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사용 가능한 노드 · IRIS-Edge Docs</title>
+<meta name="description" content="IRIS-Edge / IRIS-Edge 2.0 워크플로우 노드 목록">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html"><span class="logo">IE</span> IRIS-Edge Docs</a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="devices.html">호환 장치</a>
+      <a href="socket-protocol.html">Socket Protocol</a>
+      <a href="api.html">API (2.0)</a>
+      <a href="nodes.html" class="active">노드</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap page">
+
+  <span class="eyebrow">04 · Workflow</span>
+  <h1 style="font-size:36px;letter-spacing:-0.02em;margin:6px 0 12px;">사용 가능한 노드</h1>
+  <p class="lead">IRIS-Edge 와 IRIS-Edge 2.0 의 워크플로우는 <strong>노드(Node)</strong>를 연결해 구성합니다.
+  각 노드는 실행 흐름 핀(<code>Ex In</code> → <code>finished</code> / <code>failed</code>)으로 이어지고,
+  데이터 핀으로 값을 다음 노드에 전달합니다. 아래는 카테고리별 노드 목록입니다.</p>
+
+  <div class="note">실행 흐름은 <code>Ex In</code> 으로 들어와 처리 후 성공 시 <code>finished</code>,
+  실패 시 <code>failed</code> 핀으로 분기합니다. 데이터 핀은 노드 간 값(이미지·좌표·판정 등)을 전달합니다.</div>
+
+  <div class="toc">
+    <strong>바로가기</strong>
+    <ul>
+      <li><a href="#edge">IRIS-Edge 노드</a></li>
+      <li><a href="#flow">· 실행 (제어 흐름)</a></li>
+      <li><a href="#robot">· 로봇 · 그리퍼</a></li>
+      <li><a href="#vision">· 비전 (카메라 · AI)</a></li>
+      <li><a href="#dev">· 장치 · PLC</a></li>
+      <li><a href="#ros">· ROS</a></li>
+      <li><a href="#user">· 사용자 정의</a></li>
+      <li><a href="#edge2">IRIS-Edge 2.0 노드</a></li>
+    </ul>
+  </div>
+
+  <!-- ===================================================== -->
+  <!-- IRIS-EDGE -->
+  <!-- ===================================================== -->
+  <div class="kicker"><span>IRIS-Edge</span><div class="line"></div></div>
+
+  <h2 id="edge" style="margin-top:24px;">IRIS-Edge 노드</h2>
+  <p>데스크탑 노드 에디터에서 제공하는 노드입니다.</p>
+
+  <h3 id="flow">실행 (제어 흐름)</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>노드</th><th>역할</th><th>주요 입·출력</th></tr></thead>
+    <tbody>
+      <tr><td>시작 (Start)</td><td>시퀀스 시작점. 그래프 실행이 여기서 출발</td><td>출력 실행</td></tr>
+      <tr><td>종료 (End)</td><td>시퀀스 종료점</td><td>입력 실행</td></tr>
+      <tr><td>초기화 (Init)</td><td>시퀀스 초기화 진입점</td><td>출력 실행</td></tr>
+      <tr><td>딜레이 (Delay)</td><td>지정 시간(ms)만큼 지연 후 다음 노드 실행</td><td><span class="pill in">지연 시간</span></td></tr>
+      <tr><td>비교 (Compare)</td><td>입력 값과 기준 값을 비교(=,&gt;,≥,&lt;,≤)하여 분기</td><td><span class="pill in">비교 값</span></td></tr>
+      <tr><td>내부신호 대기</td><td>IRIS 내부 DIO 신호가 들어올 때까지 폴링 대기</td><td>—</td></tr>
+      <tr><td>내부신호 쓰기</td><td>IRIS 내부 DIO 주소에 ON/OFF 기록</td><td><span class="pill in">주소·값</span></td></tr>
+      <tr><td>내부신호 읽기</td><td>IRIS 내부 DIO 값을 읽어 전달</td><td><span class="pill out">주소·값</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="robot">로봇 · 그리퍼</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>노드</th><th>역할</th><th>주요 입·출력</th></tr></thead>
+    <tbody>
+      <tr><td>로봇 자세 (RobotPose)</td><td>현재 또는 지정 자세(pose)를 읽어 출력</td><td><span class="pill out">로봇·자세</span></td></tr>
+      <tr><td>로봇 이동 (RobotMove)</td><td>입력 자세로 로봇 단일 이동 (MoveL/MoveJ, 절대/상대)</td><td><span class="pill in">목표 자세</span></td></tr>
+      <tr><td>로봇 경로 (RobotMotion)</td><td>여러 자세로 연속 이동(경로) 실행</td><td><span class="pill in">목표 자세</span></td></tr>
+      <tr><td>Socket 큐 초기화</td><td>로봇 소켓 수신 큐를 비움 (묵은 데이터 방지)</td><td>—</td></tr>
+      <tr><td>Socket 송신</td><td>로봇으로 소켓 값 전송 (Header/Footer·STX/ETX·CRLF)</td><td><span class="pill in">송신 값</span></td></tr>
+      <tr><td>Socket 수신</td><td>로봇 소켓 수신값 읽기 (None/CRLF/STX·ETX/Bytes)</td><td><span class="pill out">수신 값</span></td></tr>
+      <tr><td>로봇 디지털 입/출력</td><td>로봇 디지털 I/O(그리퍼 등) 개폐 제어</td><td>—</td></tr>
+      <tr><td>로봇 프로그램 실행</td><td>로봇 내부 Job(프로그램) 실행</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note">Socket 송·수신 노드의 메시지 규격은 <a href="socket-protocol.html">Socket Message Protocol</a> 문서를 참고하세요.</div>
+
+  <h3 id="vision">비전 (카메라 · AI · 영상처리)</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>노드</th><th>역할</th><th>주요 입·출력</th></tr></thead>
+    <tbody>
+      <tr><td>카메라 셋팅</td><td>카메라 파라미터(노출/해상도 등) 적용</td><td>—</td></tr>
+      <tr><td>카메라 촬영 (CameraGrab)</td><td>한 프레임 촬영 또는 파일 로드 → RGB/Depth/포인트클라우드</td><td><span class="pill out">이미지 묶음</span></td></tr>
+      <tr><td>AI 추론</td><td>이미지에 AI 추론(YOLO/SAM2/이상감지/깊이 등) 수행</td><td><span class="pill in">이미지</span> <span class="pill out">결과·시각화</span></td></tr>
+      <tr><td>거리 추출</td><td>Depth 이미지에서 특정 지점의 거리 추출</td><td><span class="pill in">좌표</span> <span class="pill out">거리</span></td></tr>
+      <tr><td>좌표 변환 (2D)</td><td>비전 2D 좌표+거리를 로봇 베이스 좌표계 pose 로 변환</td><td><span class="pill in">좌표·거리</span> <span class="pill out">로봇 자세</span></td></tr>
+      <tr><td>QR 읽기</td><td>RGB 이미지에서 QR 코드 검출·디코딩</td><td><span class="pill in">이미지</span> <span class="pill out">QR 데이터</span></td></tr>
+      <tr><td>영상 처리 결과</td><td>앞단 AI/영상처리 결과를 결과 뷰로 전달·표시</td><td><span class="pill in">결과 dict</span></td></tr>
+      <tr><td>대상체 위치 탐색</td><td>2D 템플릿 매칭으로 대상체 위치 탐색</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="dev">장치 · PLC</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>노드</th><th>역할</th><th>주요 입·출력</th></tr></thead>
+    <tbody>
+      <tr><td>조명 제어</td><td>외부 조명 장치 ON/OFF/밝기 제어</td><td>—</td></tr>
+      <tr><td>장치 Socket 송신</td><td>장치(소켓)로 값 송신</td><td><span class="pill in">송신 값</span></td></tr>
+      <tr><td>장치 Socket 수신</td><td>장치(소켓)에서 값 수신</td><td><span class="pill out">수신 값</span></td></tr>
+      <tr><td>Modbus 읽기</td><td>Modbus 레지스터/코일 읽기</td><td><span class="pill out">읽은 값</span></td></tr>
+      <tr><td>Modbus 쓰기</td><td>Modbus 레지스터/코일에 값 기록</td><td><span class="pill in">쓸 값</span></td></tr>
+      <tr><td>Modbus 신호 대기</td><td>Modbus 주소가 조건 만족할 때까지 대기</td><td>—</td></tr>
+      <tr><td>PLC 읽기</td><td>PLC 디바이스/주소 값 읽기 (Single/Double Word)</td><td><span class="pill out">읽은 값</span></td></tr>
+      <tr><td>PLC 쓰기</td><td>PLC 주소에 값 기록</td><td><span class="pill in">주소·값</span></td></tr>
+      <tr><td>PLC 신호 대기</td><td>PLC 주소가 조건 만족할 때까지 대기</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="ros">ROS <span class="pill" style="font-weight:600;">Linux 전용</span></h3>
+  <p>ROS 가 설치된 Linux 환경에서만 팔레트에 노출됩니다.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>노드</th><th>역할</th></tr></thead>
+    <tbody>
+      <tr><td>TOPIC Pub</td><td>지정 ROS 토픽으로 메시지 발행</td></tr>
+      <tr><td>TOPIC Sub</td><td>지정 ROS 토픽 구독하여 수신</td></tr>
+      <tr><td>SERVICE Server</td><td>ROS 서비스 서버 (요청 수신)</td></tr>
+      <tr><td>SERVICE Client</td><td>ROS 서비스 클라이언트 (요청 → 응답)</td></tr>
+      <tr><td>ACTION Server</td><td>ROS 액션 서버</td></tr>
+      <tr><td>ACTION Client</td><td>ROS 액션 클라이언트 (goal → result)</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 id="user">사용자 정의</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>노드</th><th>역할</th><th>주요 입·출력</th></tr></thead>
+    <tbody>
+      <tr><td>사용자 입력 노드</td><td>입력한 상수를 파싱하여 리스트로 출력 ("1,2,3" → [1,2,3])</td><td><span class="pill out">파싱 리스트</span></td></tr>
+      <tr><td>사용자 정의 노드</td><td>사용자 작성 스크립트(.py)를 실행해 입력 dict 가공·출력</td><td><span class="pill in">dict</span> <span class="pill out">dict</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- ===================================================== -->
+  <!-- IRIS-EDGE 2.0 -->
+  <!-- ===================================================== -->
+  <div class="kicker"><span>IRIS-Edge 2.0</span><div class="line"></div></div>
+
+  <h2 id="edge2" style="margin-top:24px;">IRIS-Edge 2.0 노드</h2>
+  <p>IRIS-Edge 2.0 은 동일한 노드 엔진을 API 로 구동하며, 내장 노드 외에
+  <strong>플러그인 노드</strong>를 파일로 추가할 수 있습니다.
+  실시간 전체 팔레트는 <code>GET /node/catalog</code> 로 조회합니다.
+  카테고리별 내장 노드는 다음과 같습니다.</p>
+
+  <div class="table-wrap"><table>
+    <thead><tr><th>카테고리</th><th>노드 타입</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>제어 흐름</td>
+        <td><code>Start</code> · <code>End</code> · <code>Init</code> · <code>Delay</code> · <code>Compare</code> · <code>Judgment</code> · <code>Condition</code> · <code>Switch</code> · <code>Branch</code> · 내부 신호 대기 · 내부 신호 쓰기 · 내부 신호 읽기</td>
+      </tr>
+      <tr>
+        <td>카메라</td>
+        <td><code>CameraGrab</code> · <code>CameraSetting</code></td>
+      </tr>
+      <tr>
+        <td>로봇</td>
+        <td><code>RobotMove</code> · <code>RobotPose</code> · <code>RobotDigitalInOut</code> · <code>SocketInit</code> · <code>SocketSend</code> · <code>SocketReceive</code></td>
+      </tr>
+      <tr>
+        <td>AI</td>
+        <td><code>AIInference</code> · <code>AIResultSelect</code> · <code>AIROIFilter</code> · <code>ImageProcessingResult</code> · <code>ImageProcessingGetDepth</code> · <code>ImageProcessingCoordTransform2D</code> · <code>ImageProcessingReadQR</code></td>
+      </tr>
+      <tr>
+        <td>PLC</td>
+        <td><code>PLCRead</code> · <code>PLCWrite</code> · <code>PLCWaitSignal</code></td>
+      </tr>
+      <tr>
+        <td>디바이스</td>
+        <td><code>DeviceModbusRead</code> · <code>DeviceModbusWrite</code> · <code>DeviceModbusWaitSignal</code> · <code>DeviceSocketInit</code> · <code>DeviceSocketSend</code> · <code>DeviceSocketReceive</code> · <code>LightControl</code></td>
+      </tr>
+      <tr>
+        <td>ROS2</td>
+        <td><code>ROSTopicPublish</code> · <code>ROSTopicSubscribe</code> · <code>ROSServiceClient</code> · <code>ROSActionClient</code></td>
+      </tr>
+      <tr>
+        <td>사용자 정의</td>
+        <td><code>UserNode</code> · <code>UserInputNode</code> · <code>PluginNode</code></td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="note">
+    <strong>동적 핀</strong> — <code>Switch</code>·<code>Branch</code>·<code>PluginNode</code> 는 설정에 따라 출력 핀이 달라집니다.<br>
+    <strong>추론 후처리</strong> — <code>AIResultSelect</code>(클래스·신뢰도 선택)·<code>AIROIFilter</code>(ROI 내부만 통과)는
+    YOLO·SAM2·FastSAM·이상감지·깊이 등 모델 종류와 무관하게 동작합니다.
+  </div>
+
+  <h3>레거시 노드 호환</h3>
+  <p>IRIS-Edge(데스크탑)에서 쓰던 프로젝트의 노드 타입은 IRIS-Edge 2.0 로드 시 자동 정규화됩니다.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>IRIS-Edge (레거시)</th><th>IRIS-Edge 2.0</th></tr></thead>
+    <tbody>
+      <tr><td><code>User_Node</code></td><td><code>UserNode</code></td></tr>
+      <tr><td><code>UserInput_Node</code></td><td><code>UserInputNode</code></td></tr>
+      <tr><td><code>AITargetTracking_Node</code></td><td><code>AIInference</code></td></tr>
+    </tbody>
+  </table></div>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <span>IRIS-Edge Documentation</span>
+    <span><a href="index.html">← 문서 홈</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

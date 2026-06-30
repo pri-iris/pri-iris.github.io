@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Socket Message Protocol · IRIS-Edge Docs</title>
+<meta name="description" content="IRIS-Edge 소켓 송·수신 메시지 프레이밍 프로토콜">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html"><span class="logo">IE</span> IRIS-Edge Docs</a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="devices.html">호환 장치</a>
+      <a href="socket-protocol.html" class="active">Socket Protocol</a>
+      <a href="api.html">API (2.0)</a>
+      <a href="nodes.html">노드</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap page">
+
+  <span class="eyebrow">02 · Communication</span>
+  <h1 style="font-size:36px;letter-spacing:-0.02em;margin:6px 0 12px;">Socket Message Protocol</h1>
+  <p class="lead">IRIS-Edge 는 로봇·디바이스와 <strong>TCP 소켓</strong>으로 통신합니다.
+  본 문서는 소켓으로 주고받는 메시지의 프레이밍(framing) 규격을 정의합니다.
+  외부 로봇·컨트롤러를 연동할 때, 장비 측이 아래 규격에 맞춰 메시지를 구성·해석하면 됩니다.</p>
+
+  <div class="toc">
+    <strong>목차</strong>
+    <ul>
+      <li><a href="#overview">개요</a></li>
+      <li><a href="#send">송신 (Send)</a></li>
+      <li><a href="#recv">수신 (Receive)</a></li>
+      <li><a href="#modes">수신 파서 모드</a></li>
+      <li><a href="#hexheader">Header / Footer · HEX</a></li>
+      <li><a href="#image">IRIS Image 전송 프로토콜</a></li>
+      <li><a href="#queue">수신 큐 초기화</a></li>
+      <li><a href="#examples">예시</a></li>
+    </ul>
+  </div>
+
+  <!-- ================= OVERVIEW ================= -->
+  <h2 id="overview">개요</h2>
+  <p>통신은 양방향 TCP 스트림이며, 메시지 경계(framing)는 다음 요소의 조합으로 표현됩니다.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>요소</th><th>값</th><th>설명</th></tr></thead>
+      <tbody>
+        <tr><td>STX</td><td><code>0x02</code></td><td>메시지 시작 바이트 (Start of Text)</td></tr>
+        <tr><td>ETX</td><td><code>0x03</code></td><td>메시지 종료 바이트 (End of Text)</td></tr>
+        <tr><td>CR</td><td><code>0x0D</code> (<code>\r</code>)</td><td>Carriage Return</td></tr>
+        <tr><td>LF</td><td><code>0x0A</code> (<code>\n</code>)</td><td>Line Feed — CRLF 모드의 구분자</td></tr>
+        <tr><td>Header</td><td>사용자 지정</td><td>메시지 앞에 붙는 문자열/바이트 (선택)</td></tr>
+        <tr><td>Footer</td><td>사용자 지정</td><td>메시지 뒤에 붙는 문자열/바이트 (선택)</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>인코딩은 기본적으로 <strong>UTF-8</strong> 이며, 바이너리(bytes) 페이로드도 전송할 수 있습니다.</p>
+
+  <!-- ================= SEND ================= -->
+  <h2 id="send">송신 (Send)</h2>
+  <p>송신 메시지는 다음 순서로 조립됩니다. STX·ETX 와 CRLF 는 옵션이며, Header/Footer 는 지정 시에만 부착됩니다.</p>
+
+  <div class="frame">
+    <span class="seg">Header</span>
+    <span class="seg">STX 0x02</span>
+    <span class="seg req">PAYLOAD</span>
+    <span class="seg">CRLF \r\n</span>
+    <span class="seg">ETX 0x03</span>
+    <span class="seg">Footer</span>
+  </div>
+
+  <p style="font-size:14.5px;color:var(--text-dim);">조립 규칙 (안쪽 → 바깥쪽):</p>
+  <ol style="color:var(--text-dim);font-size:14.5px;line-height:1.9;">
+    <li><strong>PAYLOAD</strong> — 전송할 본문 (문자열 또는 bytes).</li>
+    <li><strong>CRLF</strong> 옵션이 켜져 있으면 PAYLOAD 뒤에 <code>\r\n</code> 을 덧붙입니다. <em>(기본 ON)</em></li>
+    <li><strong>STX/ETX</strong> 옵션이 켜져 있으면 그 결과를 <code>0x02 … 0x03</code> 으로 감쌉니다. <em>(기본 OFF)</em></li>
+    <li><strong>Header</strong> 가 지정되면 맨 앞에 붙입니다.</li>
+    <li><strong>Footer</strong> 가 지정되면 맨 뒤에 붙입니다.</li>
+  </ol>
+
+  <div class="note">기본 설정(CRLF ON · STX/ETX OFF · Header/Footer 없음)에서 문자열
+  <code>RESULT_OK</code> 를 보내면 실제 전송 바이트는 <code>RESULT_OK\r\n</code> 입니다.</div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>송신 옵션</th><th>기본값</th><th>동작</th></tr></thead>
+      <tbody>
+        <tr><td>노드 입력 사용</td><td><span class="pill off">OFF</span></td><td>이전 단계 결과값을 페이로드로 사용</td></tr>
+        <tr><td>CRLF 부착</td><td><span class="pill out">ON</span></td><td>페이로드 끝에 <code>\r\n</code> 추가</td></tr>
+        <tr><td>STX + ETX 부착</td><td><span class="pill off">OFF</span></td><td><code>0x02</code> … <code>0x03</code> 으로 감싸기</td></tr>
+        <tr><td>Header</td><td>없음</td><td>메시지 앞 문자열/HEX</td></tr>
+        <tr><td>Footer</td><td>없음</td><td>메시지 뒤 문자열/HEX</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ================= RECV ================= -->
+  <h2 id="recv">수신 (Receive)</h2>
+  <p>수신은 들어오는 바이트 스트림을 버퍼에 누적한 뒤, 선택한 <strong>파서 모드</strong>에 따라
+  메시지 경계를 잘라 한 건씩 꺼냅니다. 디코딩된 텍스트는 UTF-8 로 해석되고 앞뒤 공백이 제거됩니다.</p>
+  <div class="note">수신 페이로드가 유효한 JSON 이면 자동으로 보기 좋게 재포맷되어 전달됩니다(레거시 호환).
+  바이너리(Bytes) 모드의 결과는 원본 바이트로 유지됩니다.</div>
+
+  <!-- ================= MODES ================= -->
+  <h2 id="modes">수신 파서 모드</h2>
+  <p>장비가 보내는 메시지 형식에 맞춰 다음 네 가지 모드 중 하나를 선택합니다.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>모드</th><th>경계 규칙</th><th>설명</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="pill">None</span></td>
+          <td>버퍼 전체</td>
+          <td>수신 시점의 버퍼를 한 메시지로 그대로 반환 (구분자 없음). <em>기본값</em></td>
+        </tr>
+        <tr>
+          <td><span class="pill">CRLF</span></td>
+          <td><code>\n</code> 단위 분할</td>
+          <td><code>\n</code> 으로 라인을 나누고 끝의 <code>\r</code> 을 제거</td>
+        </tr>
+        <tr>
+          <td><span class="pill">STX + ETX</span></td>
+          <td><code>0x02</code> … <code>0x03</code></td>
+          <td>STX 와 ETX 사이의 내용을 추출 (바이너리 프레이밍)</td>
+        </tr>
+        <tr>
+          <td><span class="pill">Bytes</span></td>
+          <td>고정 길이</td>
+          <td>지정한 <strong>Byte Length</strong> 만큼의 고정 길이 청크로 분할 (raw bytes)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note warn"><strong>Bytes 모드</strong>는 정확한 바이트 수가 모일 때까지 대기한 뒤 그 길이만큼 잘라냅니다.
+  수신할 메시지의 길이가 고정된 바이너리 프로토콜에 사용하며, <code>Byte Length</code> 를 반드시 지정해야 합니다.</div>
+
+  <!-- ================= HEX HEADER ================= -->
+  <h2 id="hexheader">Header / Footer 의 HEX 표기</h2>
+  <p>Header 와 Footer 는 일반 문자열뿐 아니라 <strong>HEX 바이트</strong>로도 지정할 수 있습니다.
+  값이 <code>\x</code> 로 시작하면 16진수 바이트로 해석됩니다.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>입력 값</th><th>해석</th><th>전송 바이트</th></tr></thead>
+      <tbody>
+        <tr><td><code>ABC</code></td><td>문자열</td><td><code>0x41 0x42 0x43</code></td></tr>
+        <tr><td><code>\x02</code></td><td>HEX 1바이트</td><td><code>0x02</code></td></tr>
+        <tr><td><code>\x0D0A</code></td><td>HEX 2바이트</td><td><code>0x0D 0x0A</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ================= IMAGE TRANSFER ================= -->
+  <h2 id="image">IRIS Image 전송 프로토콜</h2>
+  <p>스캔 이미지를 전송하기 위한 <strong>바이너리 가변 길이</strong> 프로토콜입니다.
+  앞서 설명한 텍스트 기반 프레이밍과 달리, 메타데이터와 JPEG 이미지 데이터를 하나의 패킷으로 묶어 전달합니다.
+  전용 수신 모드(<code>IMAGE_TRANSFER</code>)로 동작하며 기본 포트는 <code>8080</code> 입니다.</p>
+
+  <div class="note">모든 정수 필드는 <strong>Little-Endian</strong> 이며, 문자열 필드는
+  <code>[4바이트 길이][UTF-8 본문]</code> 형태의 <em>length-prefixed</em> 구조입니다.
+  수신측은 완전한 패킷이 버퍼에 모일 때까지 대기한 뒤 한 패킷씩 처리합니다.</div>
+
+  <h3>패킷 구조</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>필드</th><th>크기</th><th>타입</th><th>설명</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>MessageType Length</td><td>4 B</td><td>int32 LE</td><td>메시지 타입 문자열 길이 (N)</td></tr>
+        <tr><td>2</td><td>MessageType</td><td><strong>N</strong> Byte</td><td>UTF-8</td><td>메시지 타입 문자열 (N)</td></tr>
+        <tr><td>3</td><td>CameraName Length</td><td>4 B</td><td>int32 LE</td><td>카메라 이름 길이 (N)</td></tr>
+        <tr><td>4</td><td>CameraName</td><td><strong>N</strong> Byte</td><td>UTF-8</td><td>촬영 카메라 이름 (N)</td></tr>
+        <tr><td>5</td><td>ScanID</td><td>8 B</td><td>int64 LE</td><td>스캔 식별자</td></tr>
+        <tr><td>6</td><td>ScanResult</td><td>4 B</td><td>int32 LE</td><td>스캔 결과 값</td></tr>
+        <tr><td>7</td><td>ImagePath Length</td><td>4 B</td><td>int32 LE</td><td>이미지 경로 길이 (N)</td></tr>
+        <tr><td>8</td><td>ImagePath</td><td><strong>N</strong> Byte</td><td>UTF-8</td><td>이미지 파일 경로 (N)</td></tr>
+        <tr><td>9</td><td>ImageData Length</td><td>4 B</td><td>int32 LE</td><td>이미지 데이터 길이 (N)</td></tr>
+        <tr><td>10</td><td>ImageData</td><td><strong>N</strong> Byte</td><td>JPG binary</td><td>JPEG 이미지 바이트 (N)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>바이트 레이아웃</h3>
+  <div class="frame">
+    <span class="seg">len + MessageType</span>
+    <span class="seg">len + CameraName</span>
+    <span class="seg">ScanID (8B)</span>
+    <span class="seg">ScanResult (4B)</span>
+    <span class="seg">len + ImagePath</span>
+    <span class="seg req">len + ImageData (JPG)</span>
+  </div>
+
+  <h3>수신 결과 필드</h3>
+  <p>한 패킷을 수신하면 다음 필드로 분해되어 전달됩니다.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>필드</th><th>설명</th></tr></thead>
+      <tbody>
+        <tr><td><code>message_type</code></td><td>메시지 타입</td></tr>
+        <tr><td><code>camera_name</code></td><td>카메라 이름</td></tr>
+        <tr><td><code>scan_id</code></td><td>스캔 식별자 (int64)</td></tr>
+        <tr><td><code>scan_result</code></td><td>스캔 결과 (int32)</td></tr>
+        <tr><td><code>image_path</code></td><td>이미지 파일 경로</td></tr>
+        <tr><td><code>image_data</code></td><td>JPEG 이미지 바이트</td></tr>
+        <tr><td><code>image_size</code></td><td>이미지 데이터 길이 (바이트)</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note warn">각 길이 필드(문자열 길이·<code>ImageData Length</code>)는 안전을 위해 최대
+  <strong>20&nbsp;MB</strong> 로 제한됩니다. 범위를 벗어난 길이가 수신되면 비정상 패킷으로 간주하여 버퍼를 초기화합니다.</div>
+
+  <!-- ================= QUEUE ================= -->
+  <h2 id="queue">수신 큐 초기화</h2>
+  <p>소켓 수신 데이터는 내부 큐에 누적됩니다. 시퀀스 시작 전 묵은 데이터로 인한 오동작을 막기 위해
+  <strong>수신 큐를 비우는(Clear)</strong> 동작을 제공합니다. (워크플로우의 <em>Socket 큐 초기화</em> 노드에 해당)</p>
+
+  <!-- ================= EXAMPLES ================= -->
+  <h2 id="examples">예시</h2>
+
+  <h3>예시 1 — 기본 텍스트 (CRLF)</h3>
+  <p>판정 결과 <code>OK</code> 를 기본 설정으로 송신:</p>
+  <pre><code>송신 옵션 : CRLF=ON, STX/ETX=OFF
+페이로드  : "OK"
+전송 바이트 : 4F 4B 0D 0A          →  O K \r \n</code></pre>
+
+  <h3>예시 2 — STX/ETX 프레이밍</h3>
+  <p>좌표 문자열을 STX/ETX 로 감싸 송신(CRLF 포함):</p>
+  <pre><code>송신 옵션 : CRLF=ON, STX/ETX=ON
+페이로드  : "100,200,30"
+전송 바이트 : 02 31 30 30 2C 32 30 30 2C 33 30 0D 0A 03
+            STX  1  0  0  ,  2  0  0  ,  3  0  \r \n ETX</code></pre>
+
+  <h3>예시 3 — Header + Footer (HEX)</h3>
+  <pre><code>Header  : \x02
+Footer  : \x03
+CRLF    : OFF
+페이로드 : "MOVE"
+전송 바이트 : 02 4D 4F 56 45 03     →  STX M O V E ETX</code></pre>
+
+  <h3>예시 4 — 고정 길이 수신 (Bytes)</h3>
+  <pre><code>수신 모드   : Bytes
+Byte Length : 16
+동작        : 버퍼에 16바이트가 모이면 정확히 16바이트를 잘라 raw bytes 로 반환</code></pre>
+
+  <div class="note">송신과 수신은 독립적으로 설정합니다. 예를 들어 장비가 STX/ETX 로 보내고
+  CRLF 로 응답을 기대한다면, 수신은 <span class="pill">STX + ETX</span> 모드, 송신은 CRLF 옵션을 켜서 맞춥니다.</div>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <span>IRIS-Edge Documentation</span>
+    <span><a href="index.html">← 문서 홈</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

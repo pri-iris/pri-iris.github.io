@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>호환 장치 리스트 · IRIS-Edge Docs</title>
+<meta name="description" content="IRIS-Edge / IRIS-Edge 2.0 호환 카메라·로봇·PLC·디바이스·AI 모델 목록">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html"><span class="logo">IE</span> IRIS-Edge Docs</a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="devices.html" class="active">호환 장치</a>
+      <a href="socket-protocol.html">Socket Protocol</a>
+      <a href="api.html">API (2.0)</a>
+      <a href="nodes.html">노드</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap page">
+
+  <span class="eyebrow">01 · Compatibility</span>
+  <h1 style="font-size:36px;letter-spacing:-0.02em;margin:6px 0 12px;">호환 가능한 장치 리스트</h1>
+  <p class="lead">IRIS-Edge 및 IRIS-Edge 2.0 이 연동을 지원하는 하드웨어와 AI 모델입니다.
+  버전별 지원 범위가 표기되어 있으며, 일부 장치·모델은 해당 SDK 가 설치된 환경에서만 활성화됩니다.</p>
+
+  <div class="toc">
+    <strong>바로가기</strong>
+    <ul>
+      <li><a href="#camera">카메라</a></li>
+      <li><a href="#robot">로봇</a></li>
+      <li><a href="#gripper">그리퍼 · I/O</a></li>
+      <li><a href="#plc">PLC</a></li>
+      <li><a href="#device">디바이스</a></li>
+      <li><a href="#ai">AI 모델</a></li>
+    </ul>
+  </div>
+
+  <p style="margin-top:24px;font-size:14px;color:var(--text-dim);">
+    <span class="pill in">●</span> IRIS-Edge 지원 &nbsp;&nbsp;
+    <span class="pill out">●</span> IRIS-Edge 2.0 지원
+  </p>
+
+  <!-- ===================== CAMERA ===================== -->
+  <h2 id="camera">카메라</h2>
+  <p>산업용 머신비전 카메라, 3D/Depth 카메라, 범용 웹캠을 지원합니다.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>카메라</th><th>연동 방식</th><th>비고</th><th>Edge</th><th>Edge 2.0</th></tr></thead>
+      <tbody>
+        <tr><td>Basler</td><td>pypylon SDK</td><td>GigE / USB3 산업용 카메라</td><td>✓</td><td>✓</td></tr>
+        <tr><td>Cognex In-Sight</td><td>소켓 통신</td><td>비전 센서 / 스마트 카메라</td><td>✓</td><td>✓</td></tr>
+        <tr><td>Intel RealSense</td><td>pyrealsense2</td><td>RGB-D (Depth) 카메라 · 포인트 클라우드</td><td>✓</td><td>✓</td></tr>
+        <tr><td>Zivid</td><td>zivid-python</td><td>고정밀 3D 포인트 클라우드</td><td>✓</td><td>✓</td></tr>
+        <tr><td>Webcam (UVC)</td><td>OpenCV VideoCapture</td><td>범용 USB 웹캠</td><td>✓</td><td>✓</td></tr>
+        <tr><td>Mocking Camera</td><td>내장 더미</td><td>하드웨어 없는 테스트·시뮬레이션</td><td>✓</td><td>✓</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">RealSense 는 RGB·Depth·포인트 클라우드 동시 취득을 지원하며, 해상도/프레임레이트를
+  카메라 셋팅에서 선택할 수 있습니다. (D400 시리즈 및 D555 포함 — pyrealsense2 2.56.4 이상)</div>
+
+  <!-- ===================== ROBOT ===================== -->
+  <h2 id="robot">로봇</h2>
+  <p>제조사 SDK 및 표준 산업 프로토콜(RTDE / URScript / TCP 소켓)을 통한 로봇 제어를 지원합니다.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>로봇</th><th>제어 방식</th><th>비고</th><th>Edge</th><th>Edge 2.0</th></tr></thead>
+      <tbody>
+        <tr><td>Universal Robots (UR)</td><td>RTDE / URScript</td><td>실시간 데이터 교환 · 스크립트 제어</td><td>✓</td><td>✓</td></tr>
+        <tr><td>Fairino</td><td>FR SDK</td><td>MoveJ / MoveL · 상대 이동 지원</td><td>✓</td><td>✓</td></tr>
+        <tr><td>LG CLOI</td><td>소켓</td><td>LG 협동로봇</td><td>✓</td><td>✓</td></tr>
+        <tr><td>Socket Robot (범용)</td><td>TCP 소켓</td><td>소켓 프로토콜 기반 임의 로봇 연동</td><td>✓</td><td>✓</td></tr>
+        <tr><td>Mocking Robot</td><td>내장 더미</td><td>하드웨어 없는 테스트·시뮬레이션</td><td>✓</td><td>✓</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">범용 <strong>Socket Robot</strong> 은 TCP 소켓으로 통신하는 로봇·컨트롤러를
+  <a href="socket-protocol.html">Socket Message Protocol</a> 규격에 맞춰 연동할 수 있습니다.
+  (현대로보틱스 · YASKAWA Motoman 등 소켓 인터페이스 제공 장비 포함)</div>
+
+  <!-- ===================== GRIPPER / IO ===================== -->
+  <h2 id="gripper">그리퍼 · 디지털 I/O</h2>
+  <p>로봇 엔드이펙터(그리퍼) 및 디지털 입·출력 제어를 지원합니다.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>장치</th><th>방식</th><th>비고</th><th>Edge</th><th>Edge 2.0</th></tr></thead>
+      <tbody>
+        <tr><td>OnRobot</td><td>I/O 제어</td><td>OnRobot 그리퍼</td><td>✓</td><td>—</td></tr>
+        <tr><td>ABB I/O</td><td>I/O 제어</td><td>ABB 디지털 I/O</td><td>✓</td><td>—</td></tr>
+        <tr><td>Robot Digital I/O</td><td>로봇 내장 DIO</td><td>로봇 디지털 출력으로 그리퍼 개폐</td><td>✓</td><td>✓</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===================== PLC ===================== -->
+  <h2 id="plc">PLC</h2>
+  <p>산업용 PLC 와의 레지스터 읽기/쓰기 및 신호 대기를 지원합니다.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>PLC</th><th>프로토콜</th><th>비고</th><th>Edge</th><th>Edge 2.0</th></tr></thead>
+      <tbody>
+        <tr><td>MELSEC (Mitsubishi)</td><td>MC Protocol</td><td>Single / Double Word 읽기·쓰기·신호 대기</td><td>✓</td><td>✓</td></tr>
+        <tr><td>Mocking PLC</td><td>내장 더미</td><td>하드웨어 없는 테스트·시뮬레이션</td><td>✓</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===================== DEVICE ===================== -->
+  <h2 id="device">디바이스</h2>
+  <p>조명 컨트롤러 등 주변 장치를 소켓 또는 Modbus 로 제어합니다.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>디바이스</th><th>프로토콜</th><th>비고</th><th>Edge</th><th>Edge 2.0</th></tr></thead>
+      <tbody>
+        <tr><td>TCP Socket Device</td><td>TCP 소켓</td><td>소켓 송·수신 (조명·컨트롤러 등)</td><td>✓</td><td>✓</td></tr>
+        <tr><td>Modbus Device</td><td>Modbus RTU / TCP</td><td>레지스터·코일 읽기·쓰기·신호 대기</td><td>✓</td><td>✓</td></tr>
+        <tr><td>조명 컨트롤러</td><td>소켓 / 명령</td><td>ON / OFF / 밝기 제어</td><td>✓</td><td>✓</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ===================== AI ===================== -->
+  <h2 id="ai">AI 모델</h2>
+  <p>객체 탐지·세그멘테이션·이상 감지·깊이 추정 등 다양한 비전 AI 모델을 지원합니다.
+  환경에 설치된 모델만 활성화됩니다(선택적 설치).</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>모델</th><th>용도</th><th>비고</th><th>Edge</th><th>Edge 2.0</th></tr></thead>
+      <tbody>
+        <tr><td>YOLO (v11)</td><td>객체 탐지 / 세그멘테이션 / 포즈</td><td>OD · SEG · POSE</td><td>✓</td><td>✓</td></tr>
+        <tr><td>SAM2</td><td>세그멘테이션 (프롬프트)</td><td>포인트/라벨 프롬프트 입력</td><td>✓</td><td>✓</td></tr>
+        <tr><td>SAM2 Ultra</td><td>세그멘테이션</td><td>SAM2 고성능 변형</td><td>✓</td><td>✓</td></tr>
+        <tr><td>FastSAM</td><td>세그멘테이션 (경량)</td><td>빠른 세그멘테이션</td><td>✓</td><td>✓</td></tr>
+        <tr><td>Depth Anything v2</td><td>단안 깊이 추정</td><td>RGB → Depth</td><td>✓</td><td>✓</td></tr>
+        <tr><td>Anomaly Detection (AD)</td><td>이상 감지</td><td>정상/불량 판정</td><td>✓</td><td>✓</td></tr>
+        <tr><td>EfficientAD</td><td>이상 감지</td><td>고속 이상 감지</td><td>✓</td><td>✓</td></tr>
+        <tr><td>PatchCore</td><td>이상 감지</td><td>패치 기반 이상 감지</td><td>✓</td><td>✓</td></tr>
+        <tr><td>AnomalyDino</td><td>이상 감지</td><td>DINO 기반 이상 감지</td><td>✓</td><td>✓</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">IRIS-Edge 2.0 에서는 <code>GET /ai/algorithms</code> 로 모델별 가용성·누락 의존성·파라미터
+  스키마를, <code>GET /system/capabilities</code> 로 설치된 전체 하드웨어 SDK·AI 모델을 조회할 수 있습니다.</div>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <span>IRIS-Edge Documentation</span>
+    <span><a href="index.html">← 문서 홈</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

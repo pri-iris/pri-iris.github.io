@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRIS-Edge 2.0 API · IRIS-Edge Docs</title>
+<meta name="description" content="IRIS-Edge 2.0 REST / WebSocket / gRPC API 레퍼런스">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html"><span class="logo">IE</span> IRIS-Edge Docs</a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="devices.html">호환 장치</a>
+      <a href="socket-protocol.html">Socket Protocol</a>
+      <a href="api.html" class="active">API (2.0)</a>
+      <a href="nodes.html">노드</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap page">
+
+  <span class="eyebrow">03 · IRIS-Edge 2.0</span>
+  <h1 style="font-size:36px;letter-spacing:-0.02em;margin:6px 0 12px;">API Documentation</h1>
+  <p class="lead">IRIS-Edge 2.0 은 하드웨어 제어와 워크플로우 실행 로직을
+  <strong>REST · WebSocket · gRPC</strong> API 로 노출합니다.
+  어떤 프론트엔드(웹·모바일·헤드리스)에서도 동일한 산업 자동화 로직을 구동할 수 있습니다.</p>
+
+  <div class="toc">
+    <strong>목차</strong>
+    <ul>
+      <li><a href="#base">기본 정보</a></li>
+      <li><a href="#camera">카메라</a></li>
+      <li><a href="#robot">로봇</a></li>
+      <li><a href="#ai">AI</a></li>
+      <li><a href="#plc">PLC</a></li>
+      <li><a href="#device">디바이스</a></li>
+      <li><a href="#node">노드 엔진</a></li>
+      <li><a href="#units">장치/프로젝트 저장</a></li>
+      <li><a href="#system">시스템</a></li>
+      <li><a href="#ros2">ROS2</a></li>
+      <li><a href="#grpc">gRPC</a></li>
+      <li><a href="#projectjson">프로젝트 JSON</a></li>
+      <li><a href="#events">이벤트 스트림</a></li>
+    </ul>
+  </div>
+
+  <!-- ================= BASE ================= -->
+  <h2 id="base">기본 정보</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>인터페이스</th><th>기본 주소</th><th>용도</th></tr></thead>
+      <tbody>
+        <tr><td>REST / WebSocket</td><td><code>http://&lt;host&gt;:8000</code></td><td>표준 HTTP API · 실시간 스트림</td></tr>
+        <tr><td>gRPC</td><td><code>&lt;host&gt;:50051</code></td><td>고성능 스트리밍 RPC</td></tr>
+        <tr><td>Swagger UI</td><td><code>/docs</code></td><td>브라우저에서 모든 엔드포인트 실행</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">아래 표의 경로는 REST 기준입니다. 메서드 색상:
+    <span class="pill get">GET</span>
+    <span class="pill post">POST</span>
+    <span class="pill put">PUT</span>
+    <span class="pill delete">DELETE</span>
+    <span class="pill ws">WS</span>
+  </div>
+
+  <!-- ================= CAMERA ================= -->
+  <h2 id="camera">카메라 <code>/cameras</code></h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>메서드</th><th>경로</th><th>설명</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill get">GET</span></td><td><code>/cameras</code></td><td>카메라 목록</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/cameras/discover</code></td><td>연결된 물리 장치 스캔 (시리얼·모델·펌웨어·사용중 여부)</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/cameras</code></td><td>카메라 추가</td></tr>
+      <tr><td><span class="pill delete">DELETE</span></td><td><code>/cameras/{key}</code></td><td>카메라 제거</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/cameras/{key}/connect</code></td><td>연결</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/cameras/{key}/disconnect</code></td><td>해제</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/cameras/connect-all</code></td><td>전체 연결</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/cameras/{key}/connected</code></td><td>연결 상태</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/cameras/{key}/grab</code></td><td>이미지 캡처 (base64 JPEG 반환)</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/cameras/{key}/start-grab</code></td><td>연속 캡처 시작</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/cameras/{key}/stop-grab</code></td><td>연속 캡처 중지</td></tr>
+      <tr><td><span class="pill ws">WS</span></td><td><code>/cameras/{key}/stream</code></td><td>실시간 JPEG 스트림</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- ================= ROBOT ================= -->
+  <h2 id="robot">로봇 <code>/robots</code></h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>메서드</th><th>경로</th><th>설명</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill get">GET</span></td><td><code>/robots</code></td><td>로봇 목록</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/robots</code></td><td>로봇 추가</td></tr>
+      <tr><td><span class="pill delete">DELETE</span></td><td><code>/robots/{key}</code></td><td>로봇 제거</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/robots/{key}/connect</code></td><td>연결</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/robots/{key}/disconnect</code></td><td>해제</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/robots/disconnect-all</code></td><td>전체 해제</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/robots/{key}/connected</code></td><td>연결 상태</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/robots/{key}/movel</code></td><td>선형 이동 (x,y,z,rx,ry,rz, vel, acc)</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/robots/{key}/movej</code></td><td>관절 이동 (joints[], vel, acc)</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/robots/{key}/speedl</code></td><td>속도 제어</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/robots/{key}/stop</code></td><td>정지</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/robots/stop-all</code></td><td>전체 정지</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/robots/{key}/pose</code></td><td>현재 포즈</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/robots/{key}/info</code></td><td>로봇 정보</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/robots/{key}/send</code></td><td>소켓 송신</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/robots/{key}/recv</code></td><td>소켓 수신</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/robots/{key}/digital-output</code></td><td>디지털 출력</td></tr>
+      <tr><td><span class="pill ws">WS</span></td><td><code>/robots/{key}/stream-pose</code></td><td>실시간 포즈 스트림</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- ================= AI ================= -->
+  <h2 id="ai">AI <code>/ai</code></h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>메서드</th><th>경로</th><th>설명</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill get">GET</span></td><td><code>/ai/algorithms</code></td><td>알고리즘 목록 — 가용성·누락 의존성·파라미터 스키마</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/ai/models</code></td><td>모델 목록</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/ai/models</code></td><td>모델 추가</td></tr>
+      <tr><td><span class="pill delete">DELETE</span></td><td><code>/ai/models/{key}</code></td><td>모델 제거</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/ai/models/{key}/initialize</code></td><td>모델 초기화</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/ai/models/{key}/warmup</code></td><td>워밍업</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/ai/models/{key}/infer</code></td><td>추론 (multipart: image + form 파라미터)</td></tr>
+      <tr><td><span class="pill put">PUT</span></td><td><code>/ai/models/{key}/parameters</code></td><td>파라미터 설정</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/ai/models/{key}/info</code></td><td>모델 정보</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/ai/models/{key}/classes</code></td><td>모델 클래스 이름 목록</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>추론 요청 예시</h3>
+  <pre><code>curl -X POST http://localhost:8000/ai/models/yolo1/infer \
+  -F "image=@photo.jpg" \
+  -F "conf=0.5" \
+  -F "iou=0.45" \
+  -F "image_size=640"</code></pre>
+
+  <!-- ================= PLC ================= -->
+  <h2 id="plc">PLC <code>/plcs</code></h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>메서드</th><th>경로</th><th>설명</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill get">GET</span></td><td><code>/plcs</code></td><td>PLC 목록</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/plcs</code></td><td>PLC 추가</td></tr>
+      <tr><td><span class="pill delete">DELETE</span></td><td><code>/plcs/{key}</code></td><td>PLC 제거</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/plcs/{key}/connect</code></td><td>연결</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/plcs/connect-all</code></td><td>전체 연결</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/plcs/{key}/disconnect</code></td><td>해제</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/plcs/{key}/connected</code></td><td>연결 상태</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/plcs/{key}/read</code></td><td>레지스터 읽기</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/plcs/{key}/write</code></td><td>레지스터 쓰기</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/plcs/{key}/wait-signal</code></td><td>신호 대기 (블로킹)</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- ================= DEVICE ================= -->
+  <h2 id="device">디바이스 <code>/devices</code></h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>메서드</th><th>경로</th><th>설명</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill get">GET</span></td><td><code>/devices</code></td><td>디바이스 목록</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/devices</code></td><td>디바이스 추가</td></tr>
+      <tr><td><span class="pill delete">DELETE</span></td><td><code>/devices/{key}</code></td><td>디바이스 제거</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/devices/{key}/connect</code></td><td>연결</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/devices/connect-all</code></td><td>전체 연결</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/devices/{key}/disconnect</code></td><td>해제</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/devices/{key}/connected</code></td><td>연결 상태</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/devices/{key}/send</code></td><td>소켓 송신</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/devices/{key}/recv</code></td><td>소켓 수신</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/devices/{key}/send-command</code></td><td>커맨드 송신</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/devices/{key}/modbus/read</code></td><td>Modbus 읽기</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/devices/{key}/modbus/write</code></td><td>Modbus 쓰기</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/devices/{key}/modbus/wait-signal</code></td><td>Modbus 신호 대기 (블로킹)</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- ================= NODE ================= -->
+  <h2 id="node">노드 엔진 <code>/node</code></h2>
+  <p>비주얼 워크플로우(노드 그래프)를 GUI 없이 로드·실행·모니터링합니다.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>메서드</th><th>경로</th><th>설명</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill post">POST</span></td><td><code>/node/project/load</code></td><td>파일에서 프로젝트 로드</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/node/project/save</code></td><td>파일로 프로젝트 저장</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/node/project</code></td><td>프로젝트 JSON 반환</td></tr>
+      <tr><td><span class="pill put">PUT</span></td><td><code>/node/project</code></td><td>프로젝트 JSON 설정</td></tr>
+      <tr><td><span class="pill delete">DELETE</span></td><td><code>/node/project</code></td><td>프로젝트 초기화</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/node/run</code></td><td>1회 실행</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/node/run-loop</code></td><td>반복 실행</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/node/stop</code></td><td>실행 중지</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/node/pause</code></td><td>현재 노드 완료 후 일시 정지</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/node/resume</code></td><td>일시 정지 해제</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/node/status</code></td><td>실행 상태 스냅샷</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/node/results</code></td><td>집계 KPI + 노드별 OK/NG + 실행 이력</td></tr>
+      <tr><td><span class="pill delete">DELETE</span></td><td><code>/node/results</code></td><td>OK/NG 카운트·이력 초기화</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/node/sequence</code></td><td>Start 노드부터 정렬된 실행 순서</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/node/catalog</code></td><td>등록된 노드 타입 팔레트 (핀·스키마 포함)</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/node/states</code></td><td>전체 노드 상태</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/node/connections</code></td><td>노드 핀 연결 상태</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/node/result/{node_id}</code></td><td>특정 노드 출력값</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/node/result/{node_id}/image</code></td><td>노드 결과 이미지 JPEG (<code>?key=</code> 선택)</td></tr>
+      <tr><td><span class="pill ws">WS</span></td><td><code>/node/events</code></td><td>실시간 이벤트 스트림</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- ================= UNITS ================= -->
+  <h2 id="units">장치 / 프로젝트 저장 <code>/units</code> · <code>/project</code></h2>
+  <p>등록된 장치(units)와 노드 그래프(graph)를 JSON 으로 내보내고 불러옵니다. 파일 경로는 절대 경로만 허용합니다.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>메서드</th><th>경로</th><th>설명</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill get">GET</span></td><td><code>/units</code></td><td>등록된 모든 unit 을 저장용 포맷으로 반환</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/units/import</code></td><td>unit 리스트 인라인 등록 (clear, connect 옵션)</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/units/save</code></td><td>현재 등록 unit 을 JSON 파일로 저장</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/units/load</code></td><td>JSON 파일에서 unit 등록</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/project</code></td><td>장치 + 노드 그래프를 프로젝트로 반환</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/project/save</code></td><td>프로젝트 JSON 파일로 저장</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/project/load</code></td><td>파일에서 장치 + 노드 그래프 함께 로드</td></tr>
+      <tr><td><span class="pill put">PUT</span></td><td><code>/project</code></td><td>인라인 프로젝트 dict 로 장치 + 노드 적용</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- ================= SYSTEM ================= -->
+  <h2 id="system">시스템 <code>/system</code></h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>메서드</th><th>경로</th><th>설명</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill get">GET</span></td><td><code>/system/config</code></td><td>유효 설정 + 해석된 경로</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/system/capabilities</code></td><td>설치된 하드웨어 SDK·AI 모델·ROS2 등 가용 기능</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/system/log-level</code></td><td>현재 로그 레벨</td></tr>
+      <tr><td><span class="pill put">PUT</span></td><td><code>/system/log-level</code></td><td>로그 레벨 변경</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/system/access-log</code></td><td>HTTP 접근 로그 모드</td></tr>
+      <tr><td><span class="pill put">PUT</span></td><td><code>/system/access-log</code></td><td>접근 로그 모드 변경</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- ================= ROS2 ================= -->
+  <h2 id="ros2">ROS2 <code>/ros2</code></h2>
+  <p>ROS2 가 설치된 환경에서만 활성화됩니다 (<code>GET /ros2/status</code> 로 가용성 확인).</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>메서드</th><th>경로</th><th>설명</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill get">GET</span></td><td><code>/ros2/status</code></td><td>ROS2 가용성·초기화 상태</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/ros2/describe</code></td><td>메시지/서비스/액션 타입 스키마</td></tr>
+      <tr><td><span class="pill get">GET</span></td><td><code>/ros2/topics</code> · <code>/services</code> · <code>/actions</code></td><td>활성 토픽 / 서비스 / 액션 목록</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/ros2/publish</code></td><td>토픽 1회 발행</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/ros2/subscribe-once</code></td><td>토픽 1회 수신</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/ros2/service/call</code></td><td>서비스 호출 (클라이언트)</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/ros2/action/send</code></td><td>액션 goal 전송 (클라이언트)</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/ros2/service/server</code></td><td>서비스 서버 등록 (고정 응답)</td></tr>
+      <tr><td><span class="pill post">POST</span></td><td><code>/ros2/action/server</code></td><td>액션 서버 등록 (feedback + 고정 result)</td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- ================= GRPC ================= -->
+  <h2 id="grpc">gRPC API</h2>
+  <p>REST 와 동일한 기능을 고성능 스트리밍 RPC 로 제공합니다 (포트 <code>50051</code>).</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>서비스</th><th>주요 스트리밍 RPC</th></tr></thead>
+    <tbody>
+      <tr><td>CameraService</td><td><code>Stream</code> — 서버 스트리밍 JPEG</td></tr>
+      <tr><td>RobotService</td><td><code>StreamPose</code> — 실시간 포즈 피드</td></tr>
+      <tr><td>AIService</td><td>요청/응답 추론</td></tr>
+      <tr><td>PLCService</td><td><code>WaitSignal</code> — 블로킹 유너리</td></tr>
+      <tr><td>DeviceService</td><td><code>ModbusWaitSignal</code> — 블로킹 유너리</td></tr>
+      <tr><td>NodeService</td><td><code>SubscribeEvents</code>, <code>Pause</code>, <code>Resume</code>, <code>GetEngineStatus</code>, <code>GetResults</code>, <code>GetSequence</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <!-- ================= PROJECT JSON ================= -->
+  <h2 id="projectjson">노드 프로젝트 JSON</h2>
+  <p>노드 그래프는 <code>nodes</code> 와 <code>connections</code> 두 배열로 표현됩니다.</p>
+  <pre><code>{
+  "nodes": [
+    {"uuid": "n1", "type": "Start", "settings": {}, "x": 0,   "y": 0},
+    {"uuid": "n2", "type": "Delay", "settings": {"delay_time": 1000}, "x": 200, "y": 0},
+    {"uuid": "n3", "type": "End",   "settings": {}, "x": 400, "y": 0}
+  ],
+  "connections": [
+    {"start_id": "n1", "start_pin": "Ex Out",   "end_id": "n2", "end_pin": "Ex In"},
+    {"start_id": "n2", "start_pin": "finished", "end_id": "n3", "end_pin": "Ex In"}
+  ]
+}</code></pre>
+  <ul style="color:var(--text-dim);font-size:14.5px;line-height:1.9;">
+    <li>노드 키 — <code>uuid</code>(아이디), <code>type</code>(노드 타입), <code>settings</code>(설정 dict). <code>title</code>·<code>x</code>·<code>y</code> 는 UI 표시용(실행 무영향).</li>
+    <li>연결 키 — <code>start_id</code>/<code>start_pin</code> (출력) → <code>end_id</code>/<code>end_pin</code> (입력).</li>
+    <li>실행 흐름 핀 — 입력 <code>Ex In</code>, 출력 <code>finished</code>/<code>failed</code>. <code>Start</code> 노드의 출력은 <code>Ex Out</code>.</li>
+  </ul>
+  <div class="note">IRIS-Edge(데스크탑)에서 만든 레거시 프로젝트 JSON 도 그대로 로드할 수 있습니다.
+  옛 타입 이름·설정 키는 현재 규격으로 자동 정규화됩니다.</div>
+
+  <!-- ================= EVENTS ================= -->
+  <h2 id="events">WebSocket 이벤트 스트림</h2>
+  <p><code>ws://&lt;host&gt;:8000/node/events</code> 에 연결하면 실행 중 이벤트를 실시간 수신합니다.</p>
+  <pre><code>{
+  "type": "node_finished",
+  "node_id": "n2",
+  "node_type": "Delay",
+  "node_title": "지연 노드",
+  "message": "",
+  "timestamp_unix_ms": 1715000000000,
+  "run_time_ms": 1002.3,
+  "loop_iteration": 3,
+  "data": {"status": "finished"}
+}</code></pre>
+  <p style="font-size:14.5px;color:var(--text-dim);">이벤트 타입:
+    <code>node_started</code>, <code>node_finished</code>, <code>node_error</code>, <code>node_log</code>,
+    <code>execution_started</code>, <code>execution_stopped</code>, <code>execution_loop_iteration</code>,
+    <code>execution_paused</code>, <code>execution_resumed</code>
+  </p>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <span>IRIS-Edge Documentation</span>
+    <span><a href="index.html">← 문서 홈</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

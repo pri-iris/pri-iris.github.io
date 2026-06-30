@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRIS-Edge Documentation</title>
+<meta name="description" content="IRIS-Edge / IRIS-Edge 2.0 — 산업 자동화 비전·로봇 엣지 플랫폼 문서">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html"><span class="logo">IE</span> IRIS-Edge Docs</a>
+    <nav class="nav">
+      <a href="index.html" class="active">Home</a>
+      <a href="devices.html">호환 장치</a>
+      <a href="socket-protocol.html">Socket Protocol</a>
+      <a href="api.html">API (2.0)</a>
+      <a href="nodes.html">노드</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Industrial Vision &amp; Robot Edge Platform</span>
+    <h1>IRIS-Edge 문서 센터</h1>
+    <p>IRIS-Edge 와 차세대 IRIS-Edge 2.0 의 호환 장치, 통신 프로토콜, API, 그리고 워크플로우 노드를 한곳에서 확인하세요.</p>
+  </div>
+</section>
+
+<main class="wrap page">
+
+  <p class="lead">
+    IRIS-Edge 는 카메라·로봇·PLC·AI 모델을 하나의 비주얼 워크플로우로 묶어
+    현장 자동화·검사 시퀀스를 구성하는 엣지 플랫폼입니다.
+    IRIS-Edge 2.0 은 동일한 자동화 로직을 GUI 에 종속되지 않는
+    <strong>gRPC / REST API</strong> 로 노출하여, 어떤 프론트엔드에서도
+    같은 하드웨어 제어와 워크플로우 실행을 구동할 수 있습니다.
+  </p>
+
+  <div class="kicker"><span>문서 목록</span><div class="line"></div></div>
+
+  <div class="card-grid">
+
+    <a class="card" href="devices.html">
+      <div class="num">01</div>
+      <h3>호환 가능한 장치 리스트</h3>
+      <p>IRIS-Edge / IRIS-Edge 2.0 이 지원하는 카메라, 로봇, 그리퍼, PLC, 디바이스, AI 모델의 전체 호환 목록.</p>
+      <div class="arrow">자세히 보기 →</div>
+    </a>
+
+    <a class="card" href="socket-protocol.html">
+      <div class="num">02</div>
+      <h3>Socket Message Protocol</h3>
+      <p>IRIS-Edge 의 소켓 송·수신 메시지 프레이밍 규격 — Header/Footer, STX·ETX, CRLF, 고정 바이트 길이 모드.</p>
+      <div class="arrow">자세히 보기 →</div>
+    </a>
+
+    <a class="card" href="api.html">
+      <div class="num">03</div>
+      <h3>IRIS-Edge 2.0 API Documentation</h3>
+      <p>REST / WebSocket / gRPC 엔드포인트 레퍼런스와 노드 엔진·프로젝트 JSON 규격, 이벤트 스트림.</p>
+      <div class="arrow">자세히 보기 →</div>
+    </a>
+
+    <a class="card" href="nodes.html">
+      <div class="num">04</div>
+      <h3>사용 가능한 노드</h3>
+      <p>IRIS-Edge 와 IRIS-Edge 2.0 에서 제공하는 워크플로우 노드의 카테고리별 역할과 입·출력 정리.</p>
+      <div class="arrow">자세히 보기 →</div>
+    </a>
+
+  </div>
+
+  <div class="kicker"><span>두 버전 비교</span><div class="line"></div></div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>항목</th><th>IRIS-Edge</th><th>IRIS-Edge 2.0</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>형태</td><td>데스크탑 애플리케이션 (GUI)</td><td>프로토콜 독립 서버 (Headless)</td></tr>
+        <tr><td>인터페이스</td><td>내장 노드 에디터 UI</td><td>REST · WebSocket · gRPC API</td></tr>
+        <tr><td>워크플로우</td><td>비주얼 노드 에디터</td><td>동일 노드 엔진 (API 구동)</td></tr>
+        <tr><td>프론트엔드</td><td>고정 (Qt 데스크탑)</td><td>Qt · 웹 · 모바일 · 헤드리스 자유</td></tr>
+        <tr><td>확장</td><td>내장 노드</td><td>플러그인 노드 · 현장 UI 플러그인</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <span>IRIS-Edge Documentation</span>
+    <span>© 2026 IRIS-Edge</span>
+  </div>
+</footer>
+
+</body>
+</html>
