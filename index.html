@@ -96,9 +96,99 @@
 <footer class="footer">
   <div class="wrap">
     <span>IRIS-Edge Documentation</span>
-    <span>© 2026 IRIS-Edge</span>
+    <span id="copyMark">© 2026 IRIS-Edge</span>
   </div>
 </footer>
+
+<!-- ===================================================================
+     internal utility — hidden. unlock: append #kg to the URL,
+     or click the footer copyright 5 times.
+     =================================================================== -->
+<div id="kg" style="display:none;position:fixed;inset:0;z-index:200;
+     background:rgba(15,20,30,.45);backdrop-filter:blur(4px);
+     align-items:center;justify-content:center;padding:24px;">
+  <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);
+       max-width:520px;width:100%;padding:28px 28px 24px;box-shadow:0 20px 60px rgba(20,30,50,.25);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <h3 style="margin:0;font-size:18px;">License Key Generator</h3>
+      <button id="kgClose" style="border:none;background:none;font-size:22px;
+              line-height:1;cursor:pointer;color:var(--text-faint);">×</button>
+    </div>
+    <p style="margin:0 0 16px;color:var(--text-dim);font-size:13.5px;">
+      대상 PC 의 MAC 주소를 입력하세요. (예: <code>9C-6B-00-6B-C5-9C</code>)
+      실기 검증과 동일하게 <strong>getmac 출력 형식(대시 구분)</strong> 을 권장합니다.</p>
+    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);
+           text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">MAC Address</label>
+    <input id="kgMac" type="text" placeholder="9C-6B-00-6B-C5-9C" autocomplete="off" spellcheck="false"
+       style="width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);
+       font-family:var(--mono);font-size:14px;background:var(--panel-2);color:var(--text);outline:none;">
+    <div style="display:flex;gap:8px;margin:14px 0 0;">
+      <button id="kgGen" style="flex:1;padding:11px 16px;border:none;border-radius:var(--radius-sm);
+              background:var(--accent);color:#fff;font-weight:600;font-size:14px;cursor:pointer;">키 생성</button>
+      <button id="kgCopy" style="padding:11px 16px;border:1px solid var(--border);border-radius:var(--radius-sm);
+              background:var(--panel);color:var(--text);font-weight:600;font-size:14px;cursor:pointer;">복사</button>
+    </div>
+    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);
+           text-transform:uppercase;letter-spacing:.04em;margin:16px 0 6px;">License Key</label>
+    <div id="kgOut" style="padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);
+         font-family:var(--mono);font-size:13px;word-break:break-all;min-height:20px;
+         background:var(--bg-soft);color:#b03a6e;">—</div>
+    <p id="kgMsg" style="margin:10px 0 0;font-size:12.5px;color:var(--text-faint);height:16px;"></p>
+  </div>
+</div>
+
+<script>
+(function () {
+  const KEY = "YONGMIN_CHANHYUK_MINJU_MAN_SE!";
+
+  // replicates key_generator.generate_license_key: sha256(mac.replace(':','').lower() + KEY).upper()
+  async function generate(macRaw) {
+    const data = macRaw.replace(/:/g, "").toLowerCase() + KEY;
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(data));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join("").toUpperCase();
+  }
+
+  const modal = document.getElementById("kg");
+  const macIn = document.getElementById("kgMac");
+  const out   = document.getElementById("kgOut");
+  const msg   = document.getElementById("kgMsg");
+
+  function open()  { modal.style.display = "flex"; setTimeout(() => macIn.focus(), 0); }
+  function close() { modal.style.display = "none"; }
+
+  async function run() {
+    const mac = macIn.value.trim();
+    if (!mac) { msg.textContent = "MAC 주소를 입력하세요."; out.textContent = "—"; return; }
+    out.textContent = await generate(mac);
+    msg.textContent = "생성 완료 · '복사' 로 클립보드에 복사할 수 있습니다.";
+  }
+
+  document.getElementById("kgGen").addEventListener("click", run);
+  macIn.addEventListener("keydown", e => { if (e.key === "Enter") run(); });
+  document.getElementById("kgClose").addEventListener("click", close);
+  modal.addEventListener("click", e => { if (e.target === modal) close(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") close(); });
+
+  document.getElementById("kgCopy").addEventListener("click", async () => {
+    const v = out.textContent;
+    if (!v || v === "—") { msg.textContent = "먼저 키를 생성하세요."; return; }
+    try { await navigator.clipboard.writeText(v); msg.textContent = "클립보드에 복사되었습니다."; }
+    catch { msg.textContent = "복사 실패 — 값을 직접 선택해 복사하세요."; }
+  });
+
+  // unlock triggers
+  if (location.hash === "#kg") open();
+  window.addEventListener("hashchange", () => { if (location.hash === "#kg") open(); });
+
+  let clicks = 0, timer = null;
+  document.getElementById("copyMark").addEventListener("click", () => {
+    clicks++;
+    clearTimeout(timer);
+    timer = setTimeout(() => { clicks = 0; }, 1200);
+    if (clicks >= 5) { clicks = 0; open(); }
+  });
+})();
+</script>
 
 </body>
 </html>
