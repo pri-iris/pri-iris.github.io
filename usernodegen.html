@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>유저노드 파일 생성기 · IRIS-Edge</title>
+<meta name="description" content="IRIS-Edge 사용자 정의 노드(User Node) 실행 스크립트 생성기">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html"><span class="logo"><img src="assets/logo.svg" alt="IRIS"></span> IRIS-Edge Docs</a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="nodegen.html">노드 생성기</a>
+      <a href="usernodegen.html" class="active">유저노드 생성기</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap page">
+
+  <span class="eyebrow">Internal Tool</span>
+  <h1 style="font-size:34px;letter-spacing:-0.02em;margin:6px 0 12px;">유저노드 파일 생성기</h1>
+  <p class="lead">앞/뒤에 연결되는 노드와 필요한 기능을 설명하면, IRIS-Edge 의 <strong>사용자 정의 노드</strong>에서
+  선택해 실행할 <code>user_node_xxx.py</code> 스크립트 한 개를 생성합니다.</p>
+
+  <div class="note warn">이 도구는 입력한 <strong>Claude API 키로 사용자의 Claude 를 직접 호출</strong>합니다.
+  키는 이 브라우저(localStorage)에만 저장되며 서버로 전송되지 않습니다.</div>
+
+  <div class="note">유저노드 스크립트는 <code>run(node_data_type_list, data, node_data, log_info)</code> 함수를 정의하며,
+  <code>(result, node_data)</code> 튜플을 반환합니다. <code>data</code> 는 <strong>앞 노드의 node_id</strong> 를 key 로 하는 dict 입니다.
+  생성된 코드에는 <code>CAMERA_GRAB_NODE_ID</code> 같은 자리표시자가 들어가며, 실제 노드 ID 를 복사-붙여넣기 하면 됩니다.</div>
+
+  <!-- API settings -->
+  <div class="gen-panel">
+    <div class="gen-field">
+      <label for="genKey">Claude API 키</label>
+      <input id="genKey" class="gen-input" type="password" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+      <div class="gen-row" style="margin-top:8px;">
+        <button id="genKeySave" class="gen-btn">키 저장</button>
+        <button id="genKeyClear" class="gen-btn">삭제</button>
+      </div>
+      <p id="genKeyMsg" class="gen-msg"></p>
+    </div>
+    <div class="gen-field" style="margin-bottom:0;">
+      <label for="genModel">모델</label>
+      <select id="genModel" class="gen-select"></select>
+    </div>
+  </div>
+
+  <!-- inputs -->
+  <div class="gen-field">
+    <label for="uFile">스크립트 파일명
+      <span class="hint">예: <code>user_node_barcode_check.py</code></span>
+    </label>
+    <input id="uFile" class="gen-input" placeholder="user_node_xxx.py" spellcheck="false">
+  </div>
+
+  <div class="gen-field">
+    <label for="uPrev">앞에 연결된 노드들
+      <span class="hint">유저노드의 input_data 에 어떤 노드가 연결되는지 설명하세요. (어떤 데이터를 넘겨주는지 — node_data_type 파악용. 각 노드마다 자리표시자 ID 상수가 생성됩니다.)</span>
+    </label>
+    <textarea id="uPrev" class="gen-textarea" rows="4" placeholder="예) 카메라 그랩 노드(RGB 이미지 제공), AI 추론 노드(검출 결과 리스트 제공)가 앞에 연결됨."></textarea>
+  </div>
+
+  <div class="gen-field">
+    <label for="uNext">뒤에 연결될 노드들
+      <span class="hint">유저노드 다음에 어떤 노드가 오는지 설명하세요. (뒷 노드가 기대하는 출력 데이터/흐름 호환용)</span>
+    </label>
+    <textarea id="uNext" class="gen-textarea" rows="3" placeholder="예) 영상처리 결과 노드가 뒤에 연결됨. IP_RESULT_IMAGE 와 IP_RESULT_DATA 를 기대함. 판정 OK/NG 로 분기."></textarea>
+  </div>
+
+  <div class="gen-field">
+    <label for="uFunc">유저노드 스크립트의 필요 기능
+      <span class="hint">이 스크립트가 실제로 수행할 연산/로직을 구체적으로 설명하세요.</span>
+    </label>
+    <textarea id="uFunc" class="gen-textarea" rows="5" placeholder="예) 앞 카메라 이미지에서 AI 검출 결과의 바운딩박스 영역을 잘라 저장하고, 검출 개수가 1개 이상이면 OK, 아니면 NG 로 결과 플래그를 설정한다. 결과 이미지와 검출 개수를 출력한다."></textarea>
+  </div>
+
+  <div class="gen-row">
+    <button id="uGen" class="gen-btn primary">유저노드 파일 생성</button>
+  </div>
+  <p id="uMsg" class="gen-msg"></p>
+
+  <div id="uResult" style="margin-top:16px;"></div>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <span>IRIS-Edge Documentation</span>
+    <span><a href="index.html">← 문서 홈</a></span>
+  </div>
+</footer>
+
+<script src="assets/generator.js"></script>
+<script>
+IRIS_GEN.wireSettings();
+
+const USERNODE_SYSTEM_PROMPT = `당신은 IRIS-Edge 의 "사용자 정의 노드(User Node)" 에서 실행되는 파이썬 스크립트를 작성하는 시니어 개발자입니다.
+사용자의 설명을 바탕으로 user_node 스크립트 파일 한 개를 생성합니다.
+
+# 실행 규약 (매우 중요)
+- 스크립트는 반드시 아래 시그니처의 run 함수를 정의한다:
+    def run(node_data_type_list, data, node_data, log_info):
+        ...
+        return result, node_data
+- 인자 의미:
+  - node_data_type_list : node_data_type 의 전체 문자열 상수 리스트 (참고용). 코드에서는 node_data_type 을 직접 import 하는 것을 권장한다:
+        from common.const import node_data_type
+  - data : 앞에 연결된 노드들의 출력을 담은 dict. **key 는 앞 노드의 node_id(uuid)** 이고, value 는 그 노드의 출력 dict(다시 node_data_type 상수를 key 로 가짐).
+           또한 data['ros_manager'] 로 ROS 매니저에 접근할 수 있다.
+  - node_data : 실행 간에 유지되는 상태 (최초 None). 갱신하여 반환하면 다음 실행에서 다시 전달된다.
+  - log_info : 로깅 함수. log_info("메시지") 형태로 사용.
+- 반환값 result 는 dict 이며, 반드시 다음 key 를 포함한다:
+    result[node_data_type.IP_RESULT_FLAG] = "OK"   # 성공 → finished 핀
+    result[node_data_type.IP_RESULT_FLAG] = "NG"   # 실패 → failed 핀
+  뒤 노드가 기대하는 데이터도 result 에 담는다 (예: IP_RESULT_IMAGE, IP_RESULT_DATA, IP_RESULT_IMAGE_NAME 등).
+
+# 앞 노드 접근 (node_id 자리표시자)
+- 앞 노드의 출력에 접근하려면 그 노드의 실제 node_id 가 필요하다. 코드 상단에 노드별 자리표시자 상수를 만들고, 실제 값은 사용자가 붙여넣도록 한다:
+    # 아래 값에 실제 노드 ID(uuid)를 붙여넣으세요.
+    CAMERA_GRAB_NODE_ID = "PASTE_NODE_ID_HERE"
+    AI_INFERENCE_NODE_ID = "PASTE_NODE_ID_HERE"
+  그리고 사용할 때:
+    cam_out = data.get(CAMERA_GRAB_NODE_ID, {})
+    rgb = cam_out.get(node_data_type.CAMERA_GRAB_RGB_IMAGE)
+- 앞에 연결된 노드마다 의미가 드러나는 이름의 자리표시자 상수를 하나씩 만든다.
+- data 에 key 가 없거나 값이 None 일 수 있으므로 .get() 과 None 체크로 방어적으로 작성한다.
+
+# 견고성
+- 전체 로직을 try/except 로 감싸고, 예외 시 log_info 로 기록한 뒤 result[IP_RESULT_FLAG]="NG" 로 반환한다 (크래시 대신 실패 흐름).
+- node_data 가 None 이면 초기화한다.
+
+# 출력 형식 (반드시 지킬 것)
+- 설명/서론 없이 아래 형식만 출력:
+<<<FILE path="<파일명>">>>
+(스크립트 전체 코드)
+<<<END FILE>>>
+- 필요하면 마지막에 사용법 안내:
+<<<NOTES>>>
+(자리표시자에 실제 노드 ID 를 어떻게 채우는지 등 간단 안내)
+<<<END NOTES>>>
+
+# 주요 node_data_type 상수
+CAMERA_GRAB_RGB_IMAGE="node_camera_grab_data_rgb_image", CAMERA_GRAB_DEPTH_IMAGE="node_camera_grab_data_depth_image",
+CAMERA_GRAB_POINT_CLOUD="node_camera_grab_data_point_cloud",
+AI_INFERENCE_RESULT="node_AI_inference_result", AI_INFERENCE_RESULT_IMAGE="node_AI_inference_result_image",
+IP_RESULT_DATA="node_IP_result_data", IP_RESULT_IMAGE="node_IP_result_image", IP_RESULT_FLAG="node_IP_result_flag",
+IP_RESULT_IMAGE_NAME="node_IP_result_image_name", IP_ORIGIN_IMAGE_NAME="node_IP_origin_image_name",
+IP_QR_DATA="node_IP_read_qr_data", IP_2D_TARGET_ROBOT_POSE="node_IP_coord_transform_2D_target_robot_pose",
+ROBOT_MOVE_POSE="node_robot_move_pose", NODE_DATA_RUN_TIME="node_data_run_time", NODE_DATA_DELAY_TIME="node_data_delay_time"
+
+모든 주석과 문자열은 한국어로 작성하세요.`;
+
+document.getElementById("uGen").addEventListener("click", async () => {
+  const file = document.getElementById("uFile").value.trim() || "user_node_custom.py";
+  const prev = document.getElementById("uPrev").value.trim();
+  const next = document.getElementById("uNext").value.trim();
+  const func = document.getElementById("uFunc").value.trim();
+  const btn = document.getElementById("uGen");
+  const msg = document.getElementById("uMsg");
+  const result = document.getElementById("uResult");
+
+  if (!func) { msg.textContent = "필요 기능을 입력하세요."; return; }
+
+  const user =
+`파일명: ${file}
+
+[앞에 연결된 노드들]
+${prev || "(없음/미지정)"}
+
+[뒤에 연결될 노드들]
+${next || "(없음/미지정)"}
+
+[유저노드 스크립트의 필요 기능]
+${func}`;
+
+  btn.disabled = true;
+  msg.innerHTML = '<span class="gen-spinner"></span>생성 중입니다... (모델에 따라 30초~2분 소요)';
+  result.innerHTML = "";
+
+  try {
+    const text = await IRIS_GEN.callClaude({ system: USERNODE_SYSTEM_PROMPT, user, maxTokens: 12000 });
+    IRIS_GEN.renderResult(result, IRIS_GEN.parseOutput(text));
+    msg.textContent = "생성 완료.";
+  } catch (e) {
+    msg.textContent = "오류: " + e.message;
+  } finally {
+    btn.disabled = false;
+  }
+});
+</script>
+
+</body>
+</html>

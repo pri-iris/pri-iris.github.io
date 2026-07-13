@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>노드 생성기 · IRIS-Edge</title>
+<meta name="description" content="IRIS-Edge 호환 노드(xxx_node.py + xxx_node_widget.py) 생성기">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="index.html"><span class="logo"><img src="assets/logo.svg" alt="IRIS"></span> IRIS-Edge Docs</a>
+    <nav class="nav">
+      <a href="index.html">Home</a>
+      <a href="nodegen.html" class="active">노드 생성기</a>
+      <a href="usernodegen.html">유저노드 생성기</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap page">
+
+  <span class="eyebrow">Internal Tool</span>
+  <h1 style="font-size:34px;letter-spacing:-0.02em;margin:6px 0 12px;">노드 생성기</h1>
+  <p class="lead">기능과 세팅 값을 설명하면 Claude 가 IRIS-Edge <code>master</code> 브랜치에 바로 넣을 수 있는
+  <code>xxx_node.py</code> 와 <code>xxx_node_widget.py</code> 두 파일을 생성합니다.</p>
+
+  <div class="note warn">이 도구는 입력한 <strong>Claude API 키로 사용자의 Claude 를 직접 호출</strong>합니다.
+  키는 이 브라우저(localStorage)에만 저장되며 서버로 전송되지 않습니다.</div>
+
+  <!-- API settings -->
+  <div class="gen-panel">
+    <div class="gen-field">
+      <label for="genKey">Claude API 키</label>
+      <input id="genKey" class="gen-input" type="password" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
+      <div class="gen-row" style="margin-top:8px;">
+        <button id="genKeySave" class="gen-btn">키 저장</button>
+        <button id="genKeyClear" class="gen-btn">삭제</button>
+      </div>
+      <p id="genKeyMsg" class="gen-msg"></p>
+    </div>
+    <div class="gen-field" style="margin-bottom:0;">
+      <label for="genModel">모델</label>
+      <select id="genModel" class="gen-select"></select>
+    </div>
+  </div>
+
+  <!-- inputs -->
+  <div class="gen-field">
+    <label for="nName">노드 이름 (영문 파일/클래스명)
+      <span class="hint">예: <code>BarcodeScan</code> → <code>BarcodeScan_node.py</code> / <code>BarcodeScan_Node</code> 클래스, <code>barcode_scan_widget.py</code></span>
+    </label>
+    <input id="nName" class="gen-input" placeholder="BarcodeScan" spellcheck="false">
+  </div>
+
+  <div class="gen-field">
+    <label for="nTitle">노드 표시 이름 (한글) · 카테고리
+      <span class="hint">에디터에 표시될 제목과 소속 카테고리 (실행 / 비전 / 로봇 / 장치 / PLC 등)</span>
+    </label>
+    <div class="gen-row">
+      <input id="nTitle" class="gen-input" style="flex:2;min-width:180px;" placeholder="바코드 스캔">
+      <input id="nCategory" class="gen-input" style="flex:1;min-width:120px;" placeholder="장치">
+    </div>
+  </div>
+
+  <div class="gen-field">
+    <label for="nDesc">기능 설명
+      <span class="hint">이 노드가 실행 시 무엇을 하는지 구체적으로 설명하세요. (입력으로 받는 데이터, 수행 동작, 출력 데이터)</span>
+    </label>
+    <textarea id="nDesc" class="gen-textarea" rows="5" placeholder="예) 앞 노드에서 넘어온 카메라 RGB 이미지를 입력받아 바코드/QR 을 디코딩한다. 디코딩된 문자열을 결과로 출력하고, 하나 이상 인식되면 finished, 없으면 failed 로 흐른다."></textarea>
+  </div>
+
+  <div class="gen-field">
+    <label for="nSettings">세팅(설정 패널) 값 설명
+      <span class="hint">위젯 설정 패널에 어떤 값들이 들어가야 하는지 설명하세요. (입력 종류: 텍스트/숫자/콤보박스/체크박스 등과 기본값)</span>
+    </label>
+    <textarea id="nSettings" class="gen-textarea" rows="5" placeholder="예) 바코드 종류 선택 콤보박스(CODE128, QR, DataMatrix, 기본값 QR), 타임아웃 숫자 입력(ms, 기본값 1000), '노드 입력 사용' 체크박스."></textarea>
+  </div>
+
+  <div class="gen-row">
+    <button id="nGen" class="gen-btn primary">노드 파일 생성</button>
+  </div>
+  <p id="nMsg" class="gen-msg"></p>
+
+  <div id="nResult" style="margin-top:16px;"></div>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <span>IRIS-Edge Documentation</span>
+    <span><a href="index.html">← 문서 홈</a></span>
+  </div>
+</footer>
+
+<script src="assets/generator.js"></script>
+<script>
+IRIS_GEN.wireSettings();
+
+const NODE_SYSTEM_PROMPT = `당신은 IRIS-Edge 비주얼 노드 에디터의 노드를 작성하는 시니어 PySide6 개발자입니다.
+사용자의 설명을 바탕으로, IRIS-Edge master 브랜치에 그대로 추가할 수 있는 노드 파일 두 개를 생성합니다:
+1) 노드 로직 파일  (<nodes>/Xxx_node.py, 클래스 Xxx_Node)
+2) 위젯(설정 패널) 파일  (<node_ui>/xxx_widget.py, 클래스 XxxWidget)
+
+# 노드 로직 파일 규약 (Xxx_node.py)
+- 위치: _node_control/node_editor/nodes/  파일명은 사용자가 준 이름 그대로 <Name>_node.py, 클래스는 <Name>_Node(Node).
+- 필수 import:
+    from _node_control.node_editor.node import Node
+    from common import node_title
+    from common.const import node_data_type
+    from common import logger as log
+    import time
+    (필요 시 PySide6, cv2, numpy 등 추가)
+- __init__(self):
+    super().__init__()
+    self.parent_menu_text = node_title.CATEGORY_<CAT>   # 예: CATEGORY_DEV, CATEGORY_OP, CATEGORY_CAMERA, CATEGORY_ROBOT, CATEGORY_PLC
+    self.type_text = node_title.TITLE_<NAME>             # node_title.py 에 추가할 상수 (아래 연동 안내에 명시)
+    self.children_order = <int>
+    self.title_text = "<한글 표시 이름>"
+    self.description = "<한글 설명>"
+    self.set_color(title_color=(r, g, b))               # 카테고리에 어울리는 연한 색
+  핀 추가 순서 (반드시 포함):
+    self.add_pin(name="Ex In", is_output=False, execution=True)
+    self.add_pin(name="finished", is_output=True, execution=True, is_status=True)
+    self.add_pin(name="failed", is_output=True, execution=True, is_status=True)
+  데이터 핀이 필요하면:
+    self.add_pin(name="input_data", is_output=False)     # 앞 노드 데이터 수신용
+    self.add_pin(name="output_data", is_output=True)     # 뒤 노드로 데이터 전달용
+  그 다음:
+    self.build()
+  이후 설정 변수 기본값 초기화 (self.xxx = ...).
+- execute_inputs(self): 입력 핀에서 값을 읽습니다. 예:
+    pin = self.get_pin("input_data")
+    if pin.connections:
+        data = pin.connections[0].start_pin.get_value()   # 앞 노드 출력 dict
+        # data[node_data_type.CAMERA_GRAB_RGB_IMAGE] 처럼 접근
+- compute(self): 실제 연산. 성공 시 self.set_pin_status('finished', 'Success'), 실패 시 self.set_pin_status('failed', 'Failure').
+  예외는 log.log(log.ERROR, ...) 로 기록 후 raise.
+  출력 데이터가 있으면 결과 dict 를 만들어 self.get_pin("output_data").set_value(result) 로 설정.
+  결과 dict 의 key 는 node_data_type 상수를 사용.
+- 설정 저장/복원은 Node 의 self.settings 를 사용 (save_settings(data) / load_settings() 는 상속됨). 위젯에서 호출.
+- 로깅은 log.log(log.INFO, log.NODE + f"...") 형식.
+- 필요 시 reset_variables(self), reset_state(self) 를 오버라이드.
+
+# 위젯 파일 규약 (xxx_widget.py)
+- 위치: _node_control/node_editor/node_ui/  파일명 snake_case (<name>_widget.py), 클래스 <Name>Widget(BaseNodeWidget).
+- 필수 import:
+    from _node_control.node_editor.node_ui.base_node_widget import BaseNodeWidget
+    from PySide6 import QtWidgets
+    from PySide6.QtWidgets import (필요한 위젯들)
+- __init__(self, node=None, parent=None): super().__init__(node=node, parent=parent); 그 다음 self.load_settings().
+- _build_body(self): 설정 UI 를 구성. 컨텐츠 위젯은 self.add_widget(w) 로, 하단 버튼은 self.add_footer_button(btn) 로 추가.
+  콤보박스/라인에디트/체크박스 등의 값 변경 시 self.node.<attr> 를 갱신하는 핸들러 연결.
+- save_settings(self): settings dict 를 만들어 self.node.save_settings(settings).
+- load_settings(self):
+    if not self.node or not hasattr(self.node, "load_settings"):
+        self.settings = { ...기본값... }
+    else:
+        self.settings = self.node.load_settings()
+    각 값을 self.settings.get(key, 기본값) 로 읽어 위젯과 self.node.<attr> 에 반영.
+- BaseNodeWidget 은 이미 제목/설명/로그 체크박스 영역을 제공하므로 그 부분은 다시 만들지 말 것.
+
+# 출력 형식 (반드시 지킬 것)
+- 설명/서론 없이 아래 형식만 출력.
+- 각 파일을 다음처럼 감싼다:
+<<<FILE path="<Name>_node.py">>>
+(파일 전체 코드)
+<<<END FILE>>>
+<<<FILE path="<name>_widget.py">>>
+(파일 전체 코드)
+<<<END FILE>>>
+- 마지막에 연동 안내를 다음처럼 감싼다 (master 에 등록하려면 사용자가 직접 해야 할 3곳을 정확한 스니펫으로):
+<<<NOTES>>>
+1) common/node_title.py 에 추가할 내용 (TITLE_<NAME>, children_order)
+2) _node_control/node_editor/node_editor_main.py 의 create_nodes() 에 추가 (import + self.append_node(<Name>_node))
+3) _node_control/node_editor/gui/node_widget.py 의 create_config_widget() 에 추가 (elif type_text == node_title.TITLE_<NAME>: widget = <Name>Widget(node))
+<<<END NOTES>>>
+
+# 주요 node_data_type 상수 (결과/입력 dict 의 key 로 사용)
+CAMERA_GRAB_RGB_IMAGE="node_camera_grab_data_rgb_image", CAMERA_GRAB_DEPTH_IMAGE="node_camera_grab_data_depth_image",
+CAMERA_GRAB_POINT_CLOUD="node_camera_grab_data_point_cloud",
+AI_INFERENCE_RESULT="node_AI_inference_result", AI_INFERENCE_RESULT_IMAGE="node_AI_inference_result_image",
+IP_RESULT_DATA="node_IP_result_data", IP_RESULT_IMAGE="node_IP_result_image", IP_RESULT_FLAG="node_IP_result_flag",
+IP_RESULT_IMAGE_NAME="node_IP_result_image_name", IP_QR_DATA="node_IP_read_qr_data",
+IP_2D_TARGET_ROBOT_POSE="node_IP_coord_transform_2D_target_robot_pose",
+ROBOT_MOVE_POSE="node_robot_move_pose", NODE_DATA_RUN_TIME="node_data_run_time", NODE_DATA_DELAY_TIME="node_data_delay_time"
+필요한 새 데이터 타입이 있으면 결과 dict 에는 위 상수 중 의미가 맞는 것을 재사용하고, 없으면 node_data_type 에 새 상수를 추가하도록 NOTES 에 함께 안내.
+
+모든 주석과 문자열은 한국어로 작성하고, 기존 IRIS-Edge 코드 스타일을 따르세요.`;
+
+document.getElementById("nGen").addEventListener("click", async () => {
+  const name = document.getElementById("nName").value.trim();
+  const title = document.getElementById("nTitle").value.trim();
+  const cat = document.getElementById("nCategory").value.trim();
+  const desc = document.getElementById("nDesc").value.trim();
+  const settings = document.getElementById("nSettings").value.trim();
+  const btn = document.getElementById("nGen");
+  const msg = document.getElementById("nMsg");
+  const result = document.getElementById("nResult");
+
+  if (!name) { msg.textContent = "노드 이름(영문)을 입력하세요."; return; }
+  if (!desc) { msg.textContent = "기능 설명을 입력하세요."; return; }
+
+  const user =
+`노드 이름(영문): ${name}
+표시 이름(한글): ${title || "(미지정 — 적절히 지어주세요)"}
+카테고리: ${cat || "(미지정 — 기능에 맞게 골라주세요)"}
+
+[기능 설명]
+${desc}
+
+[세팅 값 설명]
+${settings || "(별도 세팅 없음 — 필요하면 최소한만)"}`;
+
+  btn.disabled = true;
+  msg.innerHTML = '<span class="gen-spinner"></span>생성 중입니다... (모델에 따라 30초~2분 소요)';
+  result.innerHTML = "";
+
+  try {
+    const text = await IRIS_GEN.callClaude({ system: NODE_SYSTEM_PROMPT, user, maxTokens: 16000 });
+    IRIS_GEN.renderResult(result, IRIS_GEN.parseOutput(text));
+    msg.textContent = "생성 완료.";
+  } catch (e) {
+    msg.textContent = "오류: " + e.message;
+  } finally {
+    btn.disabled = false;
+  }
+});
+</script>
+
+</body>
+</html>
