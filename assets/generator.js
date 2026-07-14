@@ -1,64 +1,119 @@
 /* ============================================================
    IRIS-Edge code generators — shared client-side infrastructure
-   Calls the Claude API directly from the browser with a
-   user-supplied API key (stored only in this browser).
+   Calls Claude (Anthropic) or Google Gemini directly from the
+   browser with a user-supplied API key (stored only in this
+   browser). No server involved.
    ============================================================ */
 
 const IRIS_GEN = (function () {
-  const KEY_STORE = "iris_claude_api_key";
-  const MODEL_STORE = "iris_claude_model";
-  const ENDPOINT = "https://api.anthropic.com/v1/messages";
+  const PROVIDER_STORE = "iris_provider";
+  const keyStoreName = p => "iris_api_key_" + p;
+  const modelStoreName = p => "iris_model_" + p;
 
-  const MODELS = [
-    { id: "claude-opus-4-8", label: "Claude Opus 4.8 (최고 성능 · 권장)" },
-    { id: "claude-sonnet-5", label: "Claude Sonnet 5 (빠름 · 균형)" },
-    { id: "claude-haiku-4-5", label: "Claude Haiku 4.5 (가장 빠름 · 경량)" },
-  ];
+  // ---------- provider definitions ----------
+  const PROVIDERS = {
+    claude: {
+      label: "Claude (Anthropic)",
+      keyLabel: "Claude API 키",
+      keyPlaceholder: "sk-ant-...",
+      models: [
+        { id: "claude-opus-4-8", label: "Claude Opus 4.8 (최고 성능 · 권장)" },
+        { id: "claude-sonnet-5", label: "Claude Sonnet 5 (빠름 · 균형)" },
+        { id: "claude-haiku-4-5", label: "Claude Haiku 4.5 (가장 빠름 · 경량)" },
+      ],
+      call: callClaude,
+    },
+    gemini: {
+      label: "Google Gemini",
+      keyLabel: "Google Gemini API 키",
+      keyPlaceholder: "AIza...",
+      models: [
+        { id: "gemini-2.5-pro", label: "Gemini 2.5 Pro (최고 성능 · 권장)" },
+        { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash (빠름 · 균형)" },
+        { id: "gemini-2.0-flash", label: "Gemini 2.0 Flash (가장 빠름 · 경량)" },
+      ],
+      call: callGemini,
+    },
+  };
 
-  // ---------- API key + model persistence ----------
-  function getKey() { return localStorage.getItem(KEY_STORE) || ""; }
-  function setKey(v) { if (v) localStorage.setItem(KEY_STORE, v); else localStorage.removeItem(KEY_STORE); }
-  function getModel() { return localStorage.getItem(MODEL_STORE) || MODELS[0].id; }
-  function setModel(v) { localStorage.setItem(MODEL_STORE, v); }
+  // ---------- persistence ----------
+  function getProvider() {
+    const p = localStorage.getItem(PROVIDER_STORE);
+    return PROVIDERS[p] ? p : "claude";
+  }
+  function setProvider(p) { localStorage.setItem(PROVIDER_STORE, p); }
+  function getKey(p) { return localStorage.getItem(keyStoreName(p)) || ""; }
+  function setKey(p, v) { if (v) localStorage.setItem(keyStoreName(p), v); else localStorage.removeItem(keyStoreName(p)); }
+  function getModel(p) {
+    const saved = localStorage.getItem(modelStoreName(p));
+    const models = PROVIDERS[p].models;
+    return models.some(m => m.id === saved) ? saved : models[0].id;
+  }
+  function setModel(p, v) { localStorage.setItem(modelStoreName(p), v); }
 
-  // Wire the standard API-settings panel. Expects elements:
-  //   #genKey (input), #genKeySave, #genKeyClear, #genKeyMsg, #genModel (select)
+  // ---------- settings panel wiring ----------
+  // Expects: #genProvider, #genKey, #genKeyLabel, #genKeySave, #genKeyClear,
+  //          #genKeyMsg, #genModel
   function wireSettings() {
+    const provSel = document.getElementById("genProvider");
     const keyIn = document.getElementById("genKey");
+    const keyLbl = document.getElementById("genKeyLabel");
     const model = document.getElementById("genModel");
     const msg = document.getElementById("genKeyMsg");
 
-    MODELS.forEach(m => {
+    Object.keys(PROVIDERS).forEach(p => {
       const o = document.createElement("option");
-      o.value = m.id; o.textContent = m.label;
-      model.appendChild(o);
+      o.value = p; o.textContent = PROVIDERS[p].label;
+      provSel.appendChild(o);
     });
-    model.value = getModel();
-    model.addEventListener("change", () => setModel(model.value));
 
-    if (getKey()) {
-      keyIn.value = getKey();
-      msg.textContent = "저장된 키를 사용 중입니다.";
+    function loadProvider(p) {
+      const def = PROVIDERS[p];
+      // models
+      model.innerHTML = "";
+      def.models.forEach(m => {
+        const o = document.createElement("option");
+        o.value = m.id; o.textContent = m.label;
+        model.appendChild(o);
+      });
+      model.value = getModel(p);
+      // key + labels
+      if (keyLbl) keyLbl.textContent = def.keyLabel;
+      keyIn.placeholder = def.keyPlaceholder;
+      keyIn.value = getKey(p);
+      msg.textContent = getKey(p) ? "저장된 키를 사용 중입니다." : "";
     }
+
+    provSel.value = getProvider();
+    loadProvider(provSel.value);
+
+    provSel.addEventListener("change", () => {
+      setProvider(provSel.value);
+      loadProvider(provSel.value);
+    });
+    model.addEventListener("change", () => setModel(provSel.value, model.value));
 
     document.getElementById("genKeySave").addEventListener("click", () => {
       const v = keyIn.value.trim();
       if (!v) { msg.textContent = "API 키를 입력하세요."; return; }
-      setKey(v);
+      setKey(provSel.value, v);
       msg.textContent = "키가 이 브라우저에 저장되었습니다.";
     });
     document.getElementById("genKeyClear").addEventListener("click", () => {
-      setKey(""); keyIn.value = ""; msg.textContent = "저장된 키를 삭제했습니다.";
+      setKey(provSel.value, ""); keyIn.value = ""; msg.textContent = "저장된 키를 삭제했습니다.";
     });
   }
 
-  // ---------- Claude call (direct browser access) ----------
-  async function callClaude({ system, user, maxTokens = 16000 }) {
-    const key = (document.getElementById("genKey")?.value || getKey()).trim();
-    if (!key) throw new Error("먼저 Claude API 키를 입력하세요.");
-    const model = document.getElementById("genModel")?.value || getModel();
+  function currentContext() {
+    const p = document.getElementById("genProvider")?.value || getProvider();
+    const model = document.getElementById("genModel")?.value || getModel(p);
+    const key = (document.getElementById("genKey")?.value || getKey(p)).trim();
+    return { provider: p, model, key };
+  }
 
-    const res = await fetch(ENDPOINT, {
+  // ---------- Claude (Anthropic) ----------
+  async function callClaude({ system, user, model, maxTokens, key }) {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "content-type": "application/json",
@@ -73,26 +128,62 @@ const IRIS_GEN = (function () {
         messages: [{ role: "user", content: user }],
       }),
     });
-
     if (!res.ok) {
       let detail = `HTTP ${res.status}`;
       try { const j = await res.json(); detail = j.error?.message || detail; } catch (_) {}
       if (res.status === 401) detail = "API 키가 유효하지 않습니다. (401)";
       throw new Error(detail);
     }
-
     const data = await res.json();
-    const text = (data.content || [])
-      .filter(b => b.type === "text")
-      .map(b => b.text)
-      .join("");
+    const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("");
     if (!text) throw new Error("응답이 비어 있습니다. 다시 시도해 주세요.");
     return text;
   }
 
-  // ---------- parse the model output into files + notes ----------
-  // Files:  <<<FILE path="xxx.py">>> ... <<<END FILE>>>
-  // Notes:  <<<NOTES>>> ... <<<END NOTES>>>
+  // ---------- Google Gemini ----------
+  async function callGemini({ system, user, model, maxTokens, key }) {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-goog-api-key": key,
+      },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: system }] },
+        contents: [{ role: "user", parts: [{ text: user }] }],
+        generationConfig: { maxOutputTokens: maxTokens, temperature: 0.2 },
+      }),
+    });
+    if (!res.ok) {
+      let detail = `HTTP ${res.status}`;
+      try { const j = await res.json(); detail = j.error?.message || detail; } catch (_) {}
+      if (res.status === 400 && /API key not valid/i.test(detail)) detail = "API 키가 유효하지 않습니다. (400)";
+      throw new Error(detail);
+    }
+    const data = await res.json();
+    const cand = (data.candidates || [])[0];
+    if (!cand) {
+      const blocked = data.promptFeedback?.blockReason;
+      throw new Error(blocked ? `요청이 차단되었습니다: ${blocked}` : "응답이 비어 있습니다. 다시 시도해 주세요.");
+    }
+    const text = (cand.content?.parts || []).map(p => p.text || "").join("");
+    if (!text) {
+      if (cand.finishReason === "MAX_TOKENS") throw new Error("출력이 토큰 한도에 걸렸습니다. 더 빠른 모델이나 짧은 요청으로 다시 시도하세요.");
+      if (cand.finishReason === "SAFETY") throw new Error("안전 필터로 응답이 차단되었습니다.");
+      throw new Error("응답이 비어 있습니다. (finishReason: " + (cand.finishReason || "?") + ")");
+    }
+    return text;
+  }
+
+  // ---------- unified entry point ----------
+  async function generate({ system, user, maxTokens = 16000 }) {
+    const { provider, model, key } = currentContext();
+    if (!key) throw new Error("먼저 API 키를 입력하세요.");
+    return PROVIDERS[provider].call({ system, user, model, maxTokens, key });
+  }
+
+  // ---------- output parsing ----------
   function parseOutput(text) {
     const files = [];
     const fileRe = /<<<FILE\s+path="([^"]+)"\s*>>>\n?([\s\S]*?)<<<END FILE>>>/g;
@@ -106,7 +197,7 @@ const IRIS_GEN = (function () {
     return { files, notes, raw: text };
   }
 
-  // ---------- render files with copy + download ----------
+  // ---------- rendering ----------
   function esc(s) {
     return s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
   }
@@ -114,11 +205,11 @@ const IRIS_GEN = (function () {
   function renderResult(container, parsed) {
     container.innerHTML = "";
     if (!parsed.files.length) {
-      const pre = document.createElement("pre");
-      pre.innerHTML = "<code>" + esc(parsed.raw) + "</code>";
       const warn = document.createElement("div");
       warn.className = "note warn";
       warn.textContent = "파일 구분자를 찾지 못해 원본 응답을 그대로 표시합니다.";
+      const pre = document.createElement("pre");
+      pre.innerHTML = "<code>" + esc(parsed.raw) + "</code>";
       container.appendChild(warn);
       container.appendChild(pre);
       return;
@@ -130,7 +221,6 @@ const IRIS_GEN = (function () {
 
       const head = document.createElement("div");
       head.className = "gen-file-head";
-
       const name = document.createElement("span");
       name.className = "gen-file-name";
       name.textContent = f.path;
@@ -169,7 +259,6 @@ const IRIS_GEN = (function () {
       const pre = document.createElement("pre");
       pre.innerHTML = "<code>" + esc(f.code) + "</code>";
       wrap.appendChild(pre);
-
       container.appendChild(wrap);
     });
 
@@ -181,5 +270,5 @@ const IRIS_GEN = (function () {
     }
   }
 
-  return { wireSettings, callClaude, parseOutput, renderResult, getKey };
+  return { wireSettings, generate, parseOutput, renderResult };
 })();
