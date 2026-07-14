@@ -28,9 +28,10 @@ const IRIS_GEN = (function () {
       keyLabel: "Google Gemini API 키",
       keyPlaceholder: "AIza...",
       models: [
-        { id: "gemini-2.5-pro", label: "Gemini 2.5 Pro (최고 성능 · 권장)" },
-        { id: "gemini-2.5-flash", label: "Gemini 2.5 Flash (빠름 · 균형)" },
-        { id: "gemini-2.0-flash", label: "Gemini 2.0 Flash (가장 빠름 · 경량)" },
+        { id: "gemini-3.5-flash", label: "Gemini 3.5 Flash (권장 · 무료 티어 가능)" },
+        { id: "gemini-3.1-flash-lite", label: "Gemini 3.1 Flash-Lite (가장 빠름 · 무료 티어 가능)" },
+        { id: "gemini-flash-latest", label: "Gemini Flash (항상 최신 · 무료 티어 가능)" },
+        { id: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro (최고 성능 · 유료 결제 필요)" },
       ],
       call: callGemini,
     },
@@ -159,6 +160,9 @@ const IRIS_GEN = (function () {
       let detail = `HTTP ${res.status}`;
       try { const j = await res.json(); detail = j.error?.message || detail; } catch (_) {}
       if (res.status === 400 && /API key not valid/i.test(detail)) detail = "API 키가 유효하지 않습니다. (400)";
+      if (res.status === 429 && /free_tier|limit: 0/i.test(detail)) {
+        detail = "이 모델은 무료 티어 할당량이 없습니다. 모델을 Gemini 3.5 Flash / 3.1 Flash-Lite 로 바꾸거나, 결제를 활성화한 키를 사용하세요.\n(원본: " + detail + ")";
+      }
       throw new Error(detail);
     }
     const data = await res.json();
