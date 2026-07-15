@@ -223,7 +223,8 @@ ${settings || "(별도 세팅 없음 — 필요하면 최소한만)"}`;
   result.innerHTML = "";
 
   try {
-    const text = await IRIS_GEN.generate({ system: NODE_SYSTEM_PROMPT, user, maxTokens: 16000 });
+    const system = NODE_SYSTEM_PROMPT + "\n\n" + IRIS_GEN.NODE_IO_REFERENCE;
+    const text = await IRIS_GEN.generate({ system, user, maxTokens: 16000 });
     IRIS_GEN.renderResult(result, IRIS_GEN.parseOutput(text));
     msg.textContent = "생성 완료.";
   } catch (e) {
