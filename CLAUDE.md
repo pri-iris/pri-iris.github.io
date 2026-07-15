@@ -86,6 +86,23 @@ IRIS-Edge / IRIS-Edge 2.0 의 **외부 공개용** 문서 사이트. GitHub Page
 - 유저노드: `data` 는 {앞 노드 uuid: 출력 dict} + `data['ros_manager']`. result 에 `IP_RESULT_FLAG="OK"/"NG"` 필수.
   앞 노드 id 는 `CAMERA_GRAB_NODE_ID = "PASTE_NODE_ID_HERE"` 자리표시자로 넣고 사용자가 실제 id 를 붙여넣음.
 
+## 최근 변경 — 공개 HTML 페이지 반영 필요 (2026-07)
+
+iris-edge2 에 아래 기능이 추가/변경되었다. 공개 문서는 HTML(`devices.html`/`api.html`/`nodes.html`)이라
+여기(Markdown 가이드)에 반영 대상만 기록한다. 실제 페이지 편집 시 대원칙(내부 클래스/파일명 미노출)을 지킬 것.
+
+- **로봇 — UR RTDE 타입(`ur_rtde`)** 추가 → `devices.html` 로봇 목록. `ur_rtde` SDK 기반 실시간 제어,
+  자동 재접속·Dashboard 사전 점검, 아날로그 입력 지원. 별도 pip 설치 필요(네이티브 wheel).
+- **디바이스 — `websocket` / `http` 타입** 추가 → `devices.html` 장치 목록.
+  websocket 은 기존 소켓 송/수신 노드를 재사용(신규 노드 없음), http 는 무상태 요청/응답.
+- **노드 추가** → `nodes.html`:
+  - `RobotAnalogIn`(로봇 아날로그 입력 읽기) — ⚠️ **UR 로봇 전용**(그 외 타입은 미지원 에러).
+  - `RobotMotion`(로봇 경로 이동) — 포즈 목록을 순회하며 movel 반복(movej 경로는 no-op).
+  - `DeviceHttpRequest`(HTTP 요청) — GET/POST/PUT/DELETE, 2xx=finished / 그 외=failed.
+- **API — gRPC `RobotService.GetAnalogInput`** 추가(UR 전용) → `api.html` gRPC 계약.
+  (REST 엔드포인트는 없음 — 아날로그/HTTP 요청은 노드/gRPC 경유.)
+- **REST 유휴 지연 개선(API 변경 없음)** — 서버 내부 최적화라 공개 문서 반영 대상 아님(참고용).
+
 ## 라이센스 키 생성기 (index.html 내 숨김)
 - 알고리즘: `sha256( mac.replace(':','').lower() + KEY ).hexdigest().upper()`, `KEY` 는 `key_generator.py` 와 동일.
 - **콜론만 제거하고 대시는 유지** — 실기(`getmac`, 대시 대문자)와 일치시키기 위함. 형식이 결과에 영향.

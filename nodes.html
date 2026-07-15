@@ -164,7 +164,7 @@
       </tr>
       <tr>
         <td>로봇</td>
-        <td><code>RobotMove</code> · <code>RobotPose</code> · <code>RobotDigitalInOut</code> · <code>SocketInit</code> · <code>SocketSend</code> · <code>SocketReceive</code></td>
+        <td><code>RobotMove</code> · <code>RobotMotion</code> · <code>RobotPose</code> · <code>RobotDigitalInOut</code> · <code>RobotAnalogIn</code> · <code>SocketInit</code> · <code>SocketSend</code> · <code>SocketReceive</code></td>
       </tr>
       <tr>
         <td>AI</td>
@@ -176,7 +176,7 @@
       </tr>
       <tr>
         <td>디바이스</td>
-        <td><code>DeviceModbusRead</code> · <code>DeviceModbusWrite</code> · <code>DeviceModbusWaitSignal</code> · <code>DeviceSocketInit</code> · <code>DeviceSocketSend</code> · <code>DeviceSocketReceive</code> · <code>LightControl</code></td>
+        <td><code>DeviceModbusRead</code> · <code>DeviceModbusWrite</code> · <code>DeviceModbusWaitSignal</code> · <code>DeviceSocketInit</code> · <code>DeviceSocketSend</code> · <code>DeviceSocketReceive</code> · <code>DeviceHttpRequest</code> · <code>LightControl</code></td>
       </tr>
       <tr>
         <td>ROS2</td>
@@ -192,7 +192,10 @@
   <div class="note">
     <strong>동적 핀</strong> — <code>Switch</code>·<code>Branch</code>·<code>PluginNode</code> 는 설정에 따라 출력 핀이 달라집니다.<br>
     <strong>추론 후처리</strong> — <code>AIResultSelect</code>(클래스·신뢰도 선택)·<code>AIROIFilter</code>(ROI 내부만 통과)는
-    YOLO·SAM2·FastSAM·이상감지·깊이 등 모델 종류와 무관하게 동작합니다.
+    YOLO·SAM2·FastSAM·이상감지·깊이 등 모델 종류와 무관하게 동작합니다.<br>
+    <strong>로봇 경로 이동</strong> — <code>RobotMotion</code>(로봇 경로 이동)은 포즈 목록을 순회하며 자세마다 선형 이동(movel)합니다.<br>
+    <strong>HTTP 요청</strong> — <code>DeviceHttpRequest</code>(HTTP 요청)는 http 디바이스로 요청을 보내고 상태코드·응답 본문을 반환합니다.<br>
+    <strong>⚠️ <code>RobotAnalogIn</code>(로봇 아날로그 입력)은 UR 로봇 전용</strong>입니다 (UR / UR RTDE). 그 외 로봇 타입은 지원하지 않습니다.
   </div>
 
   <h3>레거시 노드 호환</h3>

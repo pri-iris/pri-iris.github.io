@@ -264,13 +264,16 @@
     <thead><tr><th>서비스</th><th>주요 스트리밍 RPC</th></tr></thead>
     <tbody>
       <tr><td>CameraService</td><td><code>Stream</code> — 서버 스트리밍 JPEG</td></tr>
-      <tr><td>RobotService</td><td><code>StreamPose</code> — 실시간 포즈 피드</td></tr>
+      <tr><td>RobotService</td><td><code>StreamPose</code> — 실시간 포즈 피드 · <code>GetAnalogInput</code> — 아날로그 입력 유너리 (⚠️ UR 전용)</td></tr>
       <tr><td>AIService</td><td>요청/응답 추론</td></tr>
       <tr><td>PLCService</td><td><code>WaitSignal</code> — 블로킹 유너리</td></tr>
       <tr><td>DeviceService</td><td><code>ModbusWaitSignal</code> — 블로킹 유너리</td></tr>
       <tr><td>NodeService</td><td><code>SubscribeEvents</code>, <code>Pause</code>, <code>Resume</code>, <code>GetEngineStatus</code>, <code>GetResults</code>, <code>GetSequence</code></td></tr>
     </tbody>
   </table></div>
+  <div class="note"><strong><code>RobotService.GetAnalogInput</code></strong> — 로봇 아날로그 입력값 읽기.
+    요청은 로봇 <code>key</code> + <code>channel</code>(UR: 0 또는 1), 응답은 <code>status</code> + <code>double value</code> 입니다.
+    ⚠️ <strong>UR 로봇 전용</strong>이며, 그 외 로봇 타입에서 호출하면 에러가 반환됩니다.</div>
 
   <!-- ================= PROJECT JSON ================= -->
   <h2 id="projectjson">노드 프로젝트 JSON</h2>
