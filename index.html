@@ -96,13 +96,15 @@
 <footer class="footer">
   <div class="wrap">
     <span>IRIS-Edge Documentation</span>
-    <span id="copyMark">© 2026 IRIS-Edge</span>
+    <span id="copyMark">© 2026 IRIS-Edge
+      <a href="#kg" id="kgLink" style="margin-left:8px;font-size:11px;color:var(--text-faint);opacity:.6;">라이센스 키</a>
+    </span>
   </div>
 </footer>
 
 <!-- ===================================================================
-     internal utility — hidden. unlock: append #kg to the URL,
-     or click the footer copyright 5 times.
+     internal utility. open: footer "라이센스 키" link or #kg hash.
+     비밀번호(iris) 입력 후에만 기능 사용 가능. (클라이언트 검사이므로 보안 아님)
      =================================================================== -->
 <div id="kg" style="display:none;position:fixed;inset:0;z-index:200;
      background:rgba(15,20,30,.45);backdrop-filter:blur(4px);
@@ -115,6 +117,18 @@
       <button id="kgClose" style="border:none;background:none;font-size:22px;
               line-height:1;cursor:pointer;color:var(--text-faint);">×</button>
     </div>
+
+    <div id="kgLock" style="padding:8px 0 4px;">
+      <p style="margin:0 0 12px;color:var(--text-dim);font-size:13.5px;">이 기능은 비밀번호가 필요합니다. 비밀번호를 입력하세요.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <input id="kgPw" type="password" autocomplete="off" placeholder="비밀번호"
+          style="flex:1;min-width:160px;padding:10px 13px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;background:var(--panel-2);color:var(--text);outline:none;">
+        <button id="kgUnlock" style="padding:10px 18px;border:none;border-radius:var(--radius-sm);background:var(--accent);color:#fff;font-weight:600;font-size:14px;cursor:pointer;">잠금 해제</button>
+      </div>
+      <p id="kgLockMsg" style="margin:10px 0 0;font-size:12.5px;color:#dc3a3a;height:16px;"></p>
+    </div>
+
+    <div id="kgBody" style="display:none;flex-direction:column;flex:1;min-height:0;">
     <p style="margin:0 0 14px;color:var(--text-dim);font-size:13.5px;">
       MAC 주소를 <strong>한 줄에 하나씩</strong> 붙여넣으세요. 실기 검증과 동일하게
       <strong>getmac 출력 형식(대시 구분)</strong> 을 권장합니다.
@@ -150,6 +164,7 @@
         MAC 주소를 입력하고 '키 생성' 을 누르세요.</p>
     </div>
     <p id="kgMsg" style="margin:10px 0 0;font-size:12.5px;color:var(--text-faint);height:16px;"></p>
+    </div>
   </div>
 </div>
 
@@ -166,15 +181,34 @@
 
   const MAC_RE = /^([0-9A-Fa-f]{2}[:\-]){5}[0-9A-Fa-f]{2}$/;
 
+  const PW = "iris";
+  const UNLOCK_STORE = "iris_kg_unlocked";
+
   const modal = document.getElementById("kg");
   const macIn = document.getElementById("kgMac");
   const out   = document.getElementById("kgOut");
   const msg   = document.getElementById("kgMsg");
   const count = document.getElementById("kgCount");
+  const lock    = document.getElementById("kgLock");
+  const body    = document.getElementById("kgBody");
+  const pwIn    = document.getElementById("kgPw");
+  const lockMsg = document.getElementById("kgLockMsg");
 
   let rows = [];   // { mac, note, key, ok }
 
-  function open()  { modal.style.display = "flex"; setTimeout(() => macIn.focus(), 0); }
+  function unlocked() { return sessionStorage.getItem(UNLOCK_STORE) === "1"; }
+  function showBody() {
+    lock.style.display = "none";
+    body.style.display = "flex";
+    setTimeout(() => macIn.focus(), 0);
+  }
+  function showLock() {
+    body.style.display = "none";
+    lock.style.display = "block";
+    pwIn.value = ""; lockMsg.textContent = "";
+    setTimeout(() => pwIn.focus(), 0);
+  }
+  function open()  { modal.style.display = "flex"; if (unlocked()) showBody(); else showLock(); }
   function close() { modal.style.display = "none"; }
 
   function esc(s) {
@@ -277,17 +311,24 @@
     msg.textContent = "license.txt 를 저장했습니다.";
   });
 
-  // unlock triggers
+  // password unlock
+  function tryUnlock() {
+    if (pwIn.value === PW) {
+      sessionStorage.setItem(UNLOCK_STORE, "1");
+      showBody();
+    } else {
+      lockMsg.textContent = "비밀번호가 올바르지 않습니다.";
+      pwIn.value = ""; pwIn.focus();
+    }
+  }
+  document.getElementById("kgUnlock").addEventListener("click", tryUnlock);
+  pwIn.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); tryUnlock(); } });
+
+  // open triggers: footer link + #kg hash
+  const kgLink = document.getElementById("kgLink");
+  if (kgLink) kgLink.addEventListener("click", () => open());
   if (location.hash === "#kg") open();
   window.addEventListener("hashchange", () => { if (location.hash === "#kg") open(); });
-
-  let clicks = 0, timer = null;
-  document.getElementById("copyMark").addEventListener("click", () => {
-    clicks++;
-    clearTimeout(timer);
-    timer = setTimeout(() => { clicks = 0; }, 1200);
-    if (clicks >= 5) { clicks = 0; open(); }
-  });
 })();
 </script>
 
