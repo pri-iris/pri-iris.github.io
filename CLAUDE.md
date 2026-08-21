@@ -103,6 +103,15 @@ iris-edge2 에 아래 기능이 추가/변경되었다. 공개 문서는 HTML(`d
   (REST 엔드포인트는 없음 — 아날로그/HTTP 요청은 노드/gRPC 경유.)
 - **REST 유휴 지연 개선(API 변경 없음)** — 서버 내부 최적화라 공개 문서 반영 대상 아님(참고용).
 
+## 최근 변경 — 공개 HTML 반영 완료 (2026-08)
+
+iris-edge2 에 아래 3개 기능이 추가되어 공개 HTML 에 반영했다. **셋 다 노드 엔진 in-process 동작으로 신규 gRPC/REST RPC 는 없다**(api.html 에 그 취지의 note 추가). 신규 서드파티 의존성도 없다.
+
+- **로봇 — YASKAWA(YRC1000 / YRC1000micro, `udp` 타입)** → `devices.html` 로봇 목록에 행 추가(HSES over UDP, 기본 포트 10040, 레지스터 읽기/쓰기). `nodes.html` 로봇 카테고리에 노드 3종(`DeviceYaskawaRegisterRead`/`DeviceYaskawaRegisterWrite`/`DeviceYaskawaRegisterWaitSignal`) + 설명 note.
+- **디바이스 — 열화상 IPC(`ipc` 타입, 현재 Optris / OPT PIX Connect)** → `devices.html` 장치 목록에 행 추가(공유 메모리 IPC, 측정영역 온도·알람·hot/cold spot·프레임, Windows 전용). `nodes.html` 디바이스 카테고리에 `DeviceIpcWaitAlarm` + 설명 note(알람 발생 시 프레임을 카메라 촬영 결과 키로 매핑해 뒤 비전/AI 노드가 소비).
+- **소켓 파서 개선** → `nodes.html`·`socket-protocol.html` 관점의 기능 note로 반영(프로젝트 로드 직후 저장된 파서 모드로 즉시 파싱, `IMAGE_TRANSFER` 모드는 기존 Socket 수신 노드에 이미 기술됨). 프로토콜 규격 자체(IMAGE_TRANSFER 패킷 구조)는 `socket-protocol.html` 에 이미 존재.
+- 대원칙 준수: 내부 클래스/파일명·디렉터리 구조·매니저 계층은 노출하지 않고 기능·타입 문자열·노드 타입 이름 수준으로만 기술.
+
 ## 라이센스 키 생성기 (index.html 내 숨김)
 - 알고리즘: `sha256( mac.replace(':','').lower() + KEY ).hexdigest().upper()`, `KEY` 는 `key_generator.py` 와 동일.
 - **콜론만 제거하고 대시는 유지** — 실기(`getmac`, 대시 대문자)와 일치시키기 위함. 형식이 결과에 영향.

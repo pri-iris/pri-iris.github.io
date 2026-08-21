@@ -274,6 +274,10 @@
   <div class="note"><strong><code>RobotService.GetAnalogInput</code></strong> — 로봇 아날로그 입력값 읽기.
     요청은 로봇 <code>key</code> + <code>channel</code>(UR: 0 또는 1), 응답은 <code>status</code> + <code>double value</code> 입니다.
     ⚠️ <strong>UR 로봇 전용</strong>이며, 그 외 로봇 타입에서 호출하면 에러가 반환됩니다.</div>
+  <div class="note"><strong>신규 gRPC/REST RPC 없이 동작하는 기능</strong> — YASKAWA(UDP/HSES) 레지스터 읽기·쓰기·신호 대기,
+    열화상(Optris / OPT PIX Connect) 알람 대기, 소켓 파서 개선(프로젝트 로드 직후 즉시 파싱 · IMAGE_TRANSFER 모드)은
+    <strong>모두 노드 엔진에서 동작</strong>합니다. 별도의 gRPC RPC 나 REST 엔드포인트를 추가하지 않으며,
+    로봇·디바이스 등록/연결은 기존 로봇·디바이스 API 를, 실행은 노드 프로젝트(<code>/node</code>, <code>NodeService</code>)를 그대로 사용합니다.</div>
 
   <!-- ================= PROJECT JSON ================= -->
   <h2 id="projectjson">노드 프로젝트 JSON</h2>
